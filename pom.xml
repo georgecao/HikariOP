@@ -1,14 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <groupId>com.zaxxer</groupId>
-   <artifactId>HikariCP</artifactId>
+   <artifactId>HikariOP</artifactId>
    <version>2.4.5-SNAPSHOT</version>
    <packaging>bundle</packaging>
 
-   <name>HikariCP</name>
-   <description>Ultimate JDBC Connection Pool</description>
-   <url>https://github.com/brettwooldridge/HikariCP</url>
+   <name>HikariOP</name>
+   <description>Ultimate Object Pool based on HikariCP</description>
+   <url>https://github.com/georgecao/HikariOP</url>
 
    <organization>
       <name>Zaxxer.com</name>
@@ -16,9 +17,9 @@
    </organization>
 
    <scm>
-      <connection>scm:git:git@github.com:brettwooldridge/HikariCP.git</connection>
-      <developerConnection>scm:git:git@github.com:brettwooldridge/HikariCP.git</developerConnection>
-      <url>git@github.com:brettwooldridge/HikariCP.git</url>
+      <connection>scm:git:git@github.com:georgecao/HikariOP.git</connection>
+      <developerConnection>scm:git:git@github.com:georgecao/HikariOP.git</developerConnection>
+      <url>git@github.com:georgecao/HikariOP.git</url>
       <tag>HEAD</tag>
    </scm>
 
@@ -32,8 +33,8 @@
 
    <developers>
       <developer>
-         <name>Brett Wooldridge</name>
-         <email>brett.wooldridge@gmail.com</email>
+         <name>George Cao</name>
+         <email>matrix3456@gmail.com</email>
       </developer>
    </developers>
 
@@ -206,7 +207,7 @@
                </execution>
             </executions>
             <configuration>
-               <mainClass>com.zaxxer.hikari.util.JavassistProxyFactory</mainClass>
+               <mainClass>org.reploop.hikari.util.JavassistProxyFactory</mainClass>
             </configuration>
          </plugin>
 
@@ -364,7 +365,7 @@
                <version>2.10.3</version>
                <configuration>
                   <show>public</show>
-                  <!-- excludePackageNames>com.zaxxer.hikari.*</excludePackageNames -->
+                  <!-- excludePackageNames>com.reploop.hikari.*</excludePackageNames -->
                   <attach>true</attach>
                   <maxmemory>1024m</maxmemory>
                </configuration>
