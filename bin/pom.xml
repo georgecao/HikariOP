@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
-   <groupId>org.reploop</groupId>
+   <groupId>com.zaxxer</groupId>
    <artifactId>HikariOP</artifactId>
    <version>2.4.5-SNAPSHOT</version>
    <packaging>bundle</packaging>
@@ -12,8 +12,8 @@
    <url>https://github.com/georgecao/HikariOP</url>
 
    <organization>
-      <name>reploop.org</name>
-      <url>https://github.com/georgecao</url>
+      <name>Zaxxer.com</name>
+      <url>https://github.com/brettwooldridge</url>
    </organization>
 
    <scm>
@@ -228,8 +228,8 @@
                      <!-- Sets the name of the property containing the settings for JaCoCo runtime agent. -->
                      <propertyName>surefireArgLine</propertyName>
                      <excludes>
-                        <exclude>**/org/reploop/hikari/pool/HikariProxy*</exclude>
-                        <exclude>**/org/reploop/hikari/metrics/**</exclude>
+                        <exclude>**/com/zaxxer/hikari/pool/HikariProxy*</exclude>
+                        <exclude>**/com/zaxxer/hikari/metrics/**</exclude>
                      </excludes>
                   </configuration>
                </execution>
@@ -246,8 +246,8 @@
                      <!-- Sets the output directory for the code coverage report. -->
                      <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
                      <excludes>
-                        <exclude>**/org/reploop/hikari/pool/HikariProxy*</exclude>
-                        <exclude>**/org/reploop/hikari/metrics/**</exclude>
+                        <exclude>**/com/zaxxer/hikari/pool/HikariProxy*</exclude>
+                        <exclude>**/com/zaxxer/hikari/metrics/**</exclude>
                      </excludes>
                   </configuration>
                </execution>
@@ -263,14 +263,14 @@
                <instructions>
                   <Bundle-Name>HikariCP</Bundle-Name>
                   <Export-Package>
-                     org.reploop.hikari,
-                     org.reploop.hikari.hibernate,
-                     org.reploop.hikari.metrics
+                     com.zaxxer.hikari,
+                     com.zaxxer.hikari.hibernate,
+                     com.zaxxer.hikari.metrics
                   </Export-Package>
-                  <Private-Package>org.reploop.hikari.*</Private-Package>
+                  <Private-Package>com.zaxxer.hikari.*</Private-Package>
                   <_exportcontents>
-                     org.reploop.hikari.pool,
-                     org.reploop.hikari.util
+                     com.zaxxer.hikari.pool,
+                     com.zaxxer.hikari.util
                   </_exportcontents>
                   <Import-Package>
                      javax.management,
@@ -365,7 +365,7 @@
                <version>2.10.3</version>
                <configuration>
                   <show>public</show>
-                  <!-- excludePackageNames>org.reploop.hikari.*</excludePackageNames -->
+                  <!-- excludePackageNames>com.reploop.hikari.*</excludePackageNames -->
                   <attach>true</attach>
                   <maxmemory>1024m</maxmemory>
                </configuration>
