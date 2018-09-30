@@ -1,10 +1,10 @@
 package org.reploop.hikari.pool;
 
+import org.junit.Assert;
+import org.junit.Test;
 import org.reploop.hikari.mocks.StubConnection;
 import org.reploop.hikari.pool.TestElf.FauxWebClassLoader;
 import org.reploop.hikari.util.JavassistProxyFactory;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -20,7 +20,7 @@ public class TestJavassistCodegen {
       String tmp = System.getProperty("java.io.tmpdir");
       JavassistProxyFactory.main(tmp + (tmp.endsWith("/") ? "" : "/"));
 
-      Path base = Paths.get(tmp, "target/classes/com/zaxxer/hikari/pool".split("/"));
+      Path base = Paths.get(tmp, "target/classes/org/reploop/hikari/pool".split("/"));
       Assert.assertTrue("", Files.isRegularFile(base.resolve("HikariProxyConnection.class")));
       Assert.assertTrue("", Files.isRegularFile(base.resolve("HikariProxyStatement.class")));
       Assert.assertTrue("", Files.isRegularFile(base.resolve("HikariProxyCallableStatement.class")));
@@ -52,13 +52,12 @@ public class TestJavassistCodegen {
       Assert.assertNotNull(proxyStatement);
    }
 
-   private Method getMethod(Class<?> clazz, String methodName, Integer... parameterCount)
-   {
+   private Method getMethod(Class<?> clazz, String methodName, Integer... parameterCount) {
       return Stream.of(clazz.getDeclaredMethods())
-          .filter(method -> method.getName().equals(methodName))
-          .filter(method -> (parameterCount.length == 0 || parameterCount[0] == method.getParameterCount()))
-          .peek(method -> method.setAccessible(true))
-          .findFirst()
-          .orElseThrow(RuntimeException::new);
+         .filter(method -> method.getName().equals(methodName))
+         .filter(method -> (parameterCount.length == 0 || parameterCount[0] == method.getParameterCount()))
+         .peek(method -> method.setAccessible(true))
+         .findFirst()
+         .orElseThrow(RuntimeException::new);
    }
 }

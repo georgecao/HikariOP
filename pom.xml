@@ -33,9 +33,9 @@
    <version>3.2.1-SNAPSHOT</version>
    <packaging>bundle</packaging>
 
-   <name>HikariCP</name>
+   <name>HikariOP</name>
    <description>Ultimate Object Pool based on HikariCP.</description>
-   <url>https://github.com/brettwooldridge/HikariCP</url>
+   <url>https://github.com/georgecao/HikariOP</url>
 
    <organization>
       <name>reploop.org</name>
@@ -279,9 +279,9 @@
                      <!-- Sets the name of the property containing the settings for JaCoCo runtime agent. -->
                      <propertyName>surefireArgLine</propertyName>
                      <excludes>
-                        <exclude>**/com/zaxxer/hikari/util/JavassistProxyFactory*</exclude>
-                        <exclude>**/com/zaxxer/hikari/pool/HikariProxy*</exclude>
-                        <exclude>**/com/zaxxer/hikari/metrics/**</exclude>
+                        <exclude>**/org/reploop/hikari/util/JavassistProxyFactory*</exclude>
+                        <exclude>**/org/reploop/hikari/pool/HikariProxy*</exclude>
+                        <exclude>**/org/reploop/hikari/metrics/**</exclude>
                      </excludes>
                   </configuration>
                </execution>
@@ -296,8 +296,8 @@
                      <!-- Sets the path to the file which contains the execution data. -->
                      <dataFile>${project.build.directory}/coverage-reports/jacoco.exec</dataFile>
                      <excludes>
-                        <exclude>**/com/zaxxer/hikari/pool/HikariProxy*</exclude>
-                        <exclude>**/com/zaxxer/hikari/metrics/**</exclude>
+                        <exclude>**/org/reploop/hikari/pool/HikariProxy*</exclude>
+                        <exclude>**/org/reploop/hikari/metrics/**</exclude>
                      </excludes>
                   </configuration>
                </execution>
