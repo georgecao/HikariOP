@@ -16,12 +16,12 @@
 
 package org.reploop.hikari.pool;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.util.ClockSource;
-import org.reploop.hikari.util.UtilityElf;
+import static org.reploop.hikari.pool.TestElf.getPool;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.reploop.hikari.util.ClockSource.elapsedMillis;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -31,16 +31,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Before;
+
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.util.UtilityElf;
+import org.reploop.hikari.util.ClockSource;
+
 /**
  * This test is meant to be run manually and interactively and was
  * build for issue #159.
  *
  * @author Brett Wooldridge
  */
-public class PostgresTest {
+public class PostgresTest
+{
    //@Test
-   public void testCase1() throws Exception {
-      HikariConfig config = new HikariConfig();
+   public void testCase1() throws Exception
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(3);
       config.setMaximumPoolSize(10);
       config.setConnectionTimeout(3000);
@@ -51,14 +60,15 @@ public class PostgresTest {
       config.setUsername("brettw");
 
       try (final HikariDataSource ds = new HikariDataSource(config)) {
-         final long start = ClockSource.INSTANCE.currentTime();
+         final long start = ClockSource.currentTime();
          do {
             Thread t = new Thread() {
                public void run() {
                   try (Connection connection = ds.getConnection()) {
                      System.err.println("Obtained connection " + connection);
-                     UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis((long) (10 + (Math.random() * 20))));
-                  } catch (SQLException e) {
+                     UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis((long)(10 + (Math.random() * 20))));
+                  }
+                  catch (SQLException e) {
                      e.printStackTrace();
                   }
                }
@@ -66,14 +76,15 @@ public class PostgresTest {
             t.setDaemon(true);
             t.start();
 
-            UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis((long) ((Math.random() * 20))));
-         } while (ClockSource.INSTANCE.elapsedMillis(start) < TimeUnit.MINUTES.toMillis(15));
+            UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis((long)((Math.random() * 20))));
+         } while (ClockSource.elapsedMillis(start) < MINUTES.toMillis(15));
       }
    }
 
    //@Test
-   public void testCase2() throws Exception {
-      HikariConfig config = new HikariConfig();
+   public void testCase2() throws Exception
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(3);
       config.setMaximumPoolSize(10);
       config.setConnectionTimeout(1000);
@@ -88,22 +99,24 @@ public class PostgresTest {
             System.err.println("\nGot a connection, and released it.  Now, enable the firewall.");
          }
 
-         TestElf.getPool(ds).logPoolState();
+         getPool(ds).logPoolState();
          UtilityElf.quietlySleep(5000L);
 
          System.err.println("\nNow attempting another getConnection(), expecting a timeout...");
 
-         long start = ClockSource.INSTANCE.currentTime();
+         long start = ClockSource.currentTime();
          try (Connection conn = ds.getConnection()) {
             System.err.println("\nOpps, got a connection.  Did you enable the firewall? " + conn);
-            Assert.fail("Opps, got a connection.  Did you enable the firewall?");
-         } catch (SQLException e) {
-            Assert.assertTrue("Timeout less than expected " + ClockSource.INSTANCE.elapsedMillis(start) + "ms", ClockSource.INSTANCE.elapsedMillis(start) > 5000);
+            fail("Opps, got a connection.  Did you enable the firewall?");
+         }
+         catch (SQLException e)
+         {
+            assertTrue("Timeout less than expected " + ClockSource.elapsedMillis(start) + "ms", ClockSource.elapsedMillis(start) > 5000);
          }
 
          System.err.println("\nOk, so far so good.  Now, disable the firewall again.  Attempting connection in 5 seconds...");
          UtilityElf.quietlySleep(5000L);
-         TestElf.getPool(ds).logPoolState();
+         getPool(ds).logPoolState();
 
          try (Connection conn = ds.getConnection()) {
             System.err.println("\nGot a connection, and released it.");
@@ -114,8 +127,9 @@ public class PostgresTest {
    }
 
    //@Test
-   public void testCase3() throws Exception {
-      HikariConfig config = new HikariConfig();
+   public void testCase3() throws Exception
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(3);
       config.setMaximumPoolSize(10);
       config.setConnectionTimeout(1000);
@@ -130,7 +144,8 @@ public class PostgresTest {
                public void run() {
                   try (Connection conn = ds.getConnection()) {
                      System.err.println("ERROR: should not have acquired connection.");
-                  } catch (SQLException e) {
+                  }
+                  catch (SQLException e) {
                      // expected
                   }
                }
@@ -142,13 +157,14 @@ public class PostgresTest {
          System.err.println("Now, bring the DB online.  Checking pool in 15 seconds.");
          UtilityElf.quietlySleep(15000L);
 
-         TestElf.getPool(ds).logPoolState();
+         getPool(ds).logPoolState();
       }
    }
 
    // @Test
-   public void testCase4() throws Exception {
-      HikariConfig config = new HikariConfig();
+   public void testCase4() throws Exception
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(15);
       config.setConnectionTimeout(10000);
@@ -166,21 +182,22 @@ public class PostgresTest {
          for (int i = 0; i < 20; i++) {
             threads.add(new Thread() {
                public void run() {
-                  UtilityElf.quietlySleep((long) (Math.random() * 2500L));
-                  final long start = ClockSource.INSTANCE.currentTime();
+                  UtilityElf.quietlySleep((long)(Math.random() * 2500L));
+                  final long start = ClockSource.currentTime();
                   do {
                      try (Connection conn = ds.getConnection(); Statement stmt = conn.createStatement()) {
                         try (ResultSet rs = stmt.executeQuery("SELECT * FROM device WHERE device_id=0 ORDER BY device_id LIMIT 1 OFFSET 0")) {
                            rs.next();
                         }
                         UtilityElf.quietlySleep(100L); //Math.max(50L, (long)(Math.random() * 250L)));
-                     } catch (SQLException e) {
+                     }
+                     catch (SQLException e) {
                         e.printStackTrace();
                         // throw new RuntimeException(e);
                      }
 
                      // UtilityElf.quietlySleep(10L); //Math.max(50L, (long)(Math.random() * 250L)));
-                  } while (ClockSource.INSTANCE.elapsedMillis(start) < TimeUnit.MINUTES.toMillis(5));
+                  } while (ClockSource.elapsedMillis(start) < TimeUnit.MINUTES.toMillis(5));
                }
             });
          }
@@ -191,17 +208,20 @@ public class PostgresTest {
    }
 
    @Before
-   public void before() {
+   public void before()
+   {
       System.err.println("\n");
    }
 
-   private void countdown(int seconds) {
+   private void countdown(int seconds)
+   {
       do {
          System.out.printf("Starting in %d seconds...\n", seconds);
          if (seconds > 10) {
             UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis(10));
             seconds -= 10;
-         } else {
+         }
+         else {
             UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis(1));
             seconds -= 1;
          }

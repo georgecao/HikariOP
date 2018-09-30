@@ -16,64 +16,75 @@
 
 package org.reploop.hikari.pool;
 
-import org.junit.Assert;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.reploop.hikari.pool.TestElf.getPool;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.junit.Test;
+
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.mocks.StubConnection;
 import org.reploop.hikari.mocks.StubDataSource;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 /**
  * @author Brett Wooldridge
  */
-public class UnwrapTest {
-   @Test
-   public void testUnwrapConnection() throws SQLException {
-      HikariConfig config = new HikariConfig();
-      config.setMinimumIdle(1);
-      config.setMaximumPoolSize(1);
-      config.setInitializationFailFast(true);
-      config.setConnectionTestQuery("VALUES 1");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+public class UnwrapTest
+{
+    @Test
+    public void testUnwrapConnection() throws SQLException
+    {
+        HikariConfig config = newHikariConfig();
+        config.setMinimumIdle(1);
+        config.setMaximumPoolSize(1);
+        config.setInitializationFailTimeout(0);
+        config.setConnectionTestQuery("VALUES 1");
+        config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
-      try (HikariDataSource ds = new HikariDataSource(config)) {
-         ds.getConnection().close();
-         Assert.assertSame("Idle connections not as expected", 1, TestElf.getPool(ds).getIdleConnections());
+       try (HikariDataSource ds = new HikariDataSource(config)) {
+          ds.getConnection().close();
+          assertSame("Idle connections not as expected", 1, getPool(ds).getIdleConnections());
 
-         Connection connection = ds.getConnection();
-         Assert.assertNotNull(connection);
+          Connection connection = ds.getConnection();
+          assertNotNull(connection);
 
-         StubConnection unwrapped = connection.unwrap(StubConnection.class);
-         Assert.assertTrue("unwrapped connection is not instance of StubConnection: " + unwrapped, (unwrapped != null && unwrapped instanceof StubConnection));
-      }
-   }
+          StubConnection unwrapped = connection.unwrap(StubConnection.class);
+          assertTrue("unwrapped connection is not instance of StubConnection: " + unwrapped, (unwrapped != null && unwrapped instanceof StubConnection));
+       }
+    }
 
-   @Test
-   public void testUnwrapDataSource() throws SQLException {
-      HikariConfig config = new HikariConfig();
-      config.setMinimumIdle(1);
-      config.setMaximumPoolSize(1);
-      config.setInitializationFailFast(true);
-      config.setConnectionTestQuery("VALUES 1");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+    @Test
+    public void testUnwrapDataSource() throws SQLException
+    {
+       HikariConfig config = newHikariConfig();
+       config.setMinimumIdle(1);
+       config.setMaximumPoolSize(1);
+       config.setInitializationFailTimeout(0);
+       config.setConnectionTestQuery("VALUES 1");
+       config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
-      try (HikariDataSource ds = new HikariDataSource(config)) {
-         StubDataSource unwrap = ds.unwrap(StubDataSource.class);
-         Assert.assertNotNull(unwrap);
-         Assert.assertTrue(unwrap instanceof StubDataSource);
+       try (HikariDataSource ds = new HikariDataSource(config)) {
+          StubDataSource unwrap = ds.unwrap(StubDataSource.class);
+          assertNotNull(unwrap);
+          assertTrue(unwrap instanceof StubDataSource);
 
-         Assert.assertTrue(ds.isWrapperFor(HikariDataSource.class));
-         Assert.assertTrue(ds.unwrap(HikariDataSource.class) instanceof HikariDataSource);
+          assertTrue(ds.isWrapperFor(HikariDataSource.class));
+          assertTrue(ds.unwrap(HikariDataSource.class) instanceof HikariDataSource);
 
-         Assert.assertFalse(ds.isWrapperFor(getClass()));
-         try {
-            ds.unwrap(getClass());
-         } catch (SQLException e) {
-            Assert.assertTrue(e.getMessage().contains("Wrapped DataSource"));
-         }
-      }
-   }
+          assertFalse(ds.isWrapperFor(getClass()));
+          try {
+             ds.unwrap(getClass());
+          }
+          catch (SQLException e) {
+             assertTrue(e.getMessage().contains("Wrapped DataSource"));
+          }
+       }
+    }
 }

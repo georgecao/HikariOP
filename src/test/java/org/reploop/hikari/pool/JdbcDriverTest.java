@@ -15,62 +15,72 @@
  */
 package org.reploop.hikari.pool;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.util.DriverDataSource;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class JdbcDriverTest {
+import org.junit.After;
+import org.junit.Test;
+
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.util.DriverDataSource;
+
+public class JdbcDriverTest
+{
    private HikariDataSource ds;
 
    @After
-   public void teardown() {
+   public void teardown()
+   {
       if (ds != null) {
          ds.close();
       }
    }
 
    @Test
-   public void driverTest1() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void driverTest1() throws SQLException
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(1);
       config.setConnectionTestQuery("VALUES 1");
-      config.setDriverClassName("com.zaxxer.hikari.mocks.StubDriver");
+      config.setDriverClassName("org.reploop.hikari.mocks.StubDriver");
       config.setJdbcUrl("jdbc:stub");
       config.addDataSourceProperty("user", "bart");
       config.addDataSourceProperty("password", "simpson");
 
       ds = new HikariDataSource(config);
 
-      Assert.assertTrue(ds.isWrapperFor(DriverDataSource.class));
+      assertTrue(ds.isWrapperFor(DriverDataSource.class));
 
       DriverDataSource unwrap = ds.unwrap(DriverDataSource.class);
-      Assert.assertNotNull(unwrap);
+      assertNotNull(unwrap);
 
-      Connection connection = ds.getConnection();
-      connection.close();
+      try (Connection connection = ds.getConnection()) {
+         // test that getConnection() succeeds
+      }
    }
 
    @Test
-   public void driverTest2() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void driverTest2() throws SQLException
+   {
+      HikariConfig config = newHikariConfig();
 
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(1);
       config.setConnectionTestQuery("VALUES 1");
-      config.setDriverClassName("com.zaxxer.hikari.mocks.StubDriver");
+      config.setDriverClassName("org.reploop.hikari.mocks.StubDriver");
       config.setJdbcUrl("jdbc:invalid");
 
       try {
          ds = new HikariDataSource(config);
-      } catch (RuntimeException e) {
-         Assert.assertTrue(e.getMessage().contains("claims to not accept"));
+      }
+      catch (RuntimeException e) {
+         assertTrue(e.getMessage().contains("claims to not accept"));
       }
    }
 }

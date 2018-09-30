@@ -16,13 +16,33 @@
 
 package org.reploop.hikari.util;
 
-import javassist.*;
-import javassist.bytecode.ClassFile;
-import org.reploop.hikari.pool.*;
-
 import java.lang.reflect.Array;
-import java.sql.*;
-import java.util.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.reploop.hikari.pool.ProxyCallableStatement;
+import org.reploop.hikari.pool.ProxyConnection;
+import org.reploop.hikari.pool.ProxyFactory;
+import org.reploop.hikari.pool.ProxyPreparedStatement;
+import org.reploop.hikari.pool.ProxyResultSet;
+import org.reploop.hikari.pool.ProxyStatement;
+
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.CtNewMethod;
+import javassist.LoaderClassPath;
+import javassist.Modifier;
+import javassist.NotFoundException;
+import javassist.bytecode.ClassFile;
 
 /**
  * This class generates the proxy objects for {@link Connection}, {@link Statement},
@@ -32,13 +52,20 @@ import java.util.*;
  *
  * @author Brett Wooldridge
  */
-public final class JavassistProxyFactory {
+public final class JavassistProxyFactory
+{
    private static ClassPool classPool;
+   private static String genDirectory = "";
 
-   public static void main(String... args) {
+   public static void main(String... args)
+   {
       classPool = new ClassPool();
       classPool.importPackage("java.sql");
       classPool.appendClassPath(new LoaderClassPath(JavassistProxyFactory.class.getClassLoader()));
+
+      if (args.length > 0) {
+         genDirectory = args[0];
+      }
 
       try {
          // Cast is not needed for these
@@ -53,43 +80,49 @@ public final class JavassistProxyFactory {
          generateProxyClass(CallableStatement.class, ProxyCallableStatement.class.getName(), methodBody);
 
          modifyProxyFactory();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   private static void modifyProxyFactory() throws Exception {
+   private static void modifyProxyFactory() throws Exception
+   {
       System.out.println("Generating method bodies for org.reploop.hikari.proxy.ProxyFactory");
 
       String packageName = ProxyConnection.class.getPackage().getName();
       CtClass proxyCt = classPool.getCtClass("org.reploop.hikari.pool.ProxyFactory");
       for (CtMethod method : proxyCt.getMethods()) {
          switch (method.getName()) {
-            case "getProxyConnection":
-               method.setBody("{return new " + packageName + ".HikariProxyConnection($$);}");
-               break;
-            case "getProxyStatement":
-               method.setBody("{return new " + packageName + ".HikariProxyStatement($$);}");
-               break;
-            case "getProxyPreparedStatement":
-               method.setBody("{return new " + packageName + ".HikariProxyPreparedStatement($$);}");
-               break;
-            case "getProxyCallableStatement":
-               method.setBody("{return new " + packageName + ".HikariProxyCallableStatement($$);}");
-               break;
-            case "getProxyResultSet":
-               method.setBody("{return new " + packageName + ".HikariProxyResultSet($$);}");
-               break;
+         case "getProxyConnection":
+            method.setBody("{return new " + packageName + ".HikariProxyConnection($$);}");
+            break;
+         case "getProxyStatement":
+            method.setBody("{return new " + packageName + ".HikariProxyStatement($$);}");
+            break;
+         case "getProxyPreparedStatement":
+            method.setBody("{return new " + packageName + ".HikariProxyPreparedStatement($$);}");
+            break;
+         case "getProxyCallableStatement":
+            method.setBody("{return new " + packageName + ".HikariProxyCallableStatement($$);}");
+            break;
+         case "getProxyResultSet":
+            method.setBody("{return new " + packageName + ".HikariProxyResultSet($$);}");
+            break;
+         default:
+            // unhandled method
+            break;
          }
       }
 
-      proxyCt.writeFile("target/classes");
+      proxyCt.writeFile(genDirectory + "target/classes");
    }
 
    /**
-    * Generate Javassist Proxy Classes
+    *  Generate Javassist Proxy Classes
     */
-   private static <T> void generateProxyClass(Class<T> primaryInterface, String superClassName, String methodBody) throws Exception {
+   private static <T> void generateProxyClass(Class<T> primaryInterface, String superClassName, String methodBody) throws Exception
+   {
       String newClassName = superClassName.replaceAll("(.+)\\.(\\w+)", "$1.Hikari$2");
 
       CtClass superCt = classPool.getCtClass(superClassName);
@@ -147,7 +180,8 @@ public final class JavassistProxyFactory {
             // Generate a method that simply invokes the same method on the delegate
             if (isThrowsSqlException(intfMethod)) {
                modifiedBody = modifiedBody.replace("method", method.getName());
-            } else {
+            }
+            else {
                modifiedBody = "{ return ((cast) delegate).method($$); }".replace("method", method.getName()).replace("cast", primaryInterface.getName());
             }
 
@@ -160,25 +194,28 @@ public final class JavassistProxyFactory {
          }
       }
 
-      targetCt.getClassFile().setMajorVersion(ClassFile.JAVA_7);
-      targetCt.writeFile("target/classes");
+      targetCt.getClassFile().setMajorVersion(ClassFile.JAVA_8);
+      targetCt.writeFile(genDirectory + "target/classes");
    }
 
-   private static boolean isThrowsSqlException(CtMethod method) {
+   private static boolean isThrowsSqlException(CtMethod method)
+   {
       try {
          for (CtClass clazz : method.getExceptionTypes()) {
             if (clazz.getSimpleName().equals("SQLException")) {
                return true;
             }
          }
-      } catch (NotFoundException e) {
+      }
+      catch (NotFoundException e) {
          // fall thru
       }
 
       return false;
    }
 
-   private static boolean isDefaultMethod(Class<?> intf, CtClass intfCt, CtMethod intfMethod) throws Exception {
+   private static boolean isDefaultMethod(Class<?> intf, CtClass intfCt, CtMethod intfMethod) throws Exception
+   {
       List<Class<?>> paramTypes = new ArrayList<>();
 
       for (CtClass pt : intfMethod.getParameterTypes()) {
@@ -188,7 +225,8 @@ public final class JavassistProxyFactory {
       return intf.getDeclaredMethod(intfMethod.getName(), paramTypes.toArray(new Class[paramTypes.size()])).toString().contains("default ");
    }
 
-   private static Set<Class<?>> getAllInterfaces(Class<?> clazz) {
+   private static Set<Class<?>> getAllInterfaces(Class<?> clazz)
+   {
       Set<Class<?>> interfaces = new HashSet<>();
       for (Class<?> intf : Arrays.asList(clazz.getInterfaces())) {
          if (intf.getInterfaces().length > 0) {
@@ -207,36 +245,39 @@ public final class JavassistProxyFactory {
       return interfaces;
    }
 
-   private static Class<?> toJavaClass(CtClass cls) throws Exception {
+   private static Class<?> toJavaClass(CtClass cls) throws Exception
+   {
       if (cls.getName().endsWith("[]")) {
          return Array.newInstance(toJavaClass(cls.getName().replace("[]", "")), 0).getClass();
-      } else {
+      }
+      else {
          return toJavaClass(cls.getName());
       }
    }
 
-   private static Class<?> toJavaClass(String cn) throws Exception {
+   private static Class<?> toJavaClass(String cn) throws Exception
+   {
       switch (cn) {
-         case "int":
-            return int.class;
-         case "long":
-            return long.class;
-         case "short":
-            return short.class;
-         case "byte":
-            return byte.class;
-         case "float":
-            return float.class;
-         case "double":
-            return double.class;
-         case "boolean":
-            return boolean.class;
-         case "char":
-            return char.class;
-         case "void":
-            return void.class;
-         default:
-            return Class.forName(cn);
+      case "int":
+         return int.class;
+      case "long":
+         return long.class;
+      case "short":
+         return short.class;
+      case "byte":
+         return byte.class;
+      case "float":
+         return float.class;
+      case "double":
+         return double.class;
+      case "boolean":
+         return boolean.class;
+      case "char":
+         return char.class;
+      case "void":
+         return void.class;
+      default:
+         return Class.forName(cn);
       }
    }
 }

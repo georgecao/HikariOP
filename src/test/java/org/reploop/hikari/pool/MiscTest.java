@@ -16,12 +16,20 @@
 
 package org.reploop.hikari.pool;
 
-import org.apache.logging.log4j.Level;
-import org.junit.Assert;
-import org.junit.Test;
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.util.UtilityElf;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.reploop.hikari.pool.TestElf.getPool;
+import static org.reploop.hikari.pool.TestElf.setConfigUnitTest;
+import static org.reploop.hikari.pool.TestElf.setSlf4jLogLevel;
+import static org.reploop.hikari.pool.TestElf.setSlf4jTargetStream;
+import static org.reploop.hikari.util.UtilityElf.createInstance;
+import static org.reploop.hikari.util.UtilityElf.getTransactionIsolation;
+import static org.reploop.hikari.util.UtilityElf.quietlySleep;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -31,79 +39,97 @@ import java.sql.SQLException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
+import org.junit.Test;
+
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+
 /**
  * @author Brett Wooldridge
  */
-public class MiscTest {
+public class MiscTest
+{
    @Test
-   public void testLogWriter() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void testLogWriter() throws SQLException
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(4);
-      config.setPoolName("test");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
-      TestElf.setConfigUnitTest(true);
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
+      setConfigUnitTest(true);
 
       try (HikariDataSource ds = new HikariDataSource(config)) {
          PrintWriter writer = new PrintWriter(System.out);
          ds.setLogWriter(writer);
-         Assert.assertSame(writer, ds.getLogWriter());
-         Assert.assertEquals("test", config.getPoolName());
-      } finally {
-         TestElf.setConfigUnitTest(false);
+         assertSame(writer, ds.getLogWriter());
+         assertEquals("testLogWriter", config.getPoolName());
+      }
+      finally
+      {
+         setConfigUnitTest(false);
       }
    }
 
    @Test
-   public void testInvalidIsolation() {
+   public void testInvalidIsolation()
+   {
       try {
-         UtilityElf.getTransactionIsolation("INVALID");
-         Assert.fail();
-      } catch (Exception e) {
-         Assert.assertTrue(e instanceof IllegalArgumentException);
+         getTransactionIsolation("INVALID");
+         fail();
+      }
+      catch (Exception e) {
+         assertTrue(e instanceof IllegalArgumentException);
       }
    }
 
    @Test
-   public void testCreateInstance() {
+   public void testCreateInstance()
+   {
       try {
-         UtilityElf.createInstance("invalid", null);
-         Assert.fail();
-      } catch (RuntimeException e) {
-         Assert.assertTrue(e.getCause() instanceof ClassNotFoundException);
+         createInstance("invalid", null);
+         fail();
+      }
+      catch (RuntimeException e) {
+         assertTrue(e.getCause() instanceof ClassNotFoundException);
       }
    }
 
    @Test
-   public void testLeakDetection() throws Exception {
+   public void testLeakDetection() throws Exception
+   {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      PrintStream ps = new PrintStream(baos, true);
-      TestElf.setSlf4jTargetStream(Class.forName("org.reploop.hikari.pool.ProxyLeakTask"), ps);
-      TestElf.setConfigUnitTest(true);
+      try (PrintStream ps = new PrintStream(baos, true)) {
+         setSlf4jTargetStream(Class.forName("org.reploop.hikari.pool.ProxyLeakTask"), ps);
+         setConfigUnitTest(true);
 
-      HikariConfig config = new HikariConfig();
-      config.setMinimumIdle(0);
-      config.setMaximumPoolSize(4);
-      config.setPoolName("test");
-      config.setThreadFactory(Executors.defaultThreadFactory());
-      config.setMetricRegistry(null);
-      config.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(1));
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+         HikariConfig config = newHikariConfig();
+         config.setMinimumIdle(0);
+         config.setMaximumPoolSize(4);
+         config.setThreadFactory(Executors.defaultThreadFactory());
+         config.setMetricRegistry(null);
+         config.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(1));
+         config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
-      try (HikariDataSource ds = new HikariDataSource(config)) {
-         TestElf.setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
-         TestElf.getPool(ds).logPoolState();
+         try (HikariDataSource ds = new HikariDataSource(config)) {
+            setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
+            getPool(ds).logPoolState();
 
-         Connection connection = ds.getConnection();
-         UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis(4));
-         connection.close();
-         UtilityElf.quietlySleep(TimeUnit.SECONDS.toMillis(1));
-         ps.close();
-         String s = new String(baos.toByteArray());
-         Assert.assertNotNull("Exception string was null", s);
-         Assert.assertTrue("Expected exception to contain 'Connection leak detection' but contains *" + s + "*", s.contains("Connection leak detection"));
-      } finally {
-         TestElf.setConfigUnitTest(false);
+            try (Connection connection = ds.getConnection()) {
+               quietlySleep(SECONDS.toMillis(4));
+               connection.close();
+               quietlySleep(SECONDS.toMillis(1));
+               ps.close();
+               String s = new String(baos.toByteArray());
+               assertNotNull("Exception string was null", s);
+               assertTrue("Expected exception to contain 'Connection leak detection' but contains *" + s + "*", s.contains("Connection leak detection"));
+            }
+         }
+         finally
+         {
+            setConfigUnitTest(false);
+            setSlf4jLogLevel(HikariPool.class, Level.INFO);
+         }
       }
    }
 }

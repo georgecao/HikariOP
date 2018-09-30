@@ -2,14 +2,40 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
+   <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <sureFireOptions9/>
+      <sureFireForks9>false</sureFireForks9>
+      <artifact.classifier/>
+
+      <felix.bundle.plugin.version>3.3.0</felix.bundle.plugin.version>
+      <felix.version>5.6.8</felix.version>
+      <hibernate.version>5.2.10.Final</hibernate.version>
+      <javassist.version>3.22.0-CR1</javassist.version>
+      <jndi.version>0.11.4.1</jndi.version>
+      <maven.release.version>2.5.3</maven.release.version>
+      <metrics.version>3.2.4</metrics.version>
+      <micrometer.version>1.0.0</micrometer.version>
+      <simpleclient.version>0.0.26</simpleclient.version>
+      <mockito.version>2.10.0</mockito.version>
+      <pax.exam.version>4.11.0</pax.exam.version>
+      <pax.url.version>2.5.2</pax.url.version>
+      <postgresql.version>42.1.4</postgresql.version>
+      <slf4j.version>1.7.25</slf4j.version>
+      <log4j.version>2.9.0</log4j.version>
+      <commons.csv.version>1.5</commons.csv.version>
+      <h2.version>1.4.196</h2.version>
+      <junit.version>4.12</junit.version>
+   </properties>
+
    <groupId>org.reploop</groupId>
    <artifactId>HikariOP</artifactId>
-   <version>2.4.5-SNAPSHOT</version>
+   <version>3.2.1-SNAPSHOT</version>
    <packaging>bundle</packaging>
 
-   <name>HikariOP</name>
-   <description>Ultimate Object Pool based on HikariCP</description>
-   <url>https://github.com/georgecao/HikariOP</url>
+   <name>HikariCP</name>
+   <description>Ultimate Object Pool based on HikariCP.</description>
+   <url>https://github.com/brettwooldridge/HikariCP</url>
 
    <organization>
       <name>reploop.org</name>
@@ -37,23 +63,6 @@
          <email>matrix3456@gmail.com</email>
       </developer>
    </developers>
-
-   <properties>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-      <felix.bundle.plugin.version>3.0.1</felix.bundle.plugin.version>
-      <felix.version>5.4.0</felix.version>
-      <hibernate.version>5.0.7.Final</hibernate.version>
-      <javassist.version>3.20.0-GA</javassist.version>
-      <jndi.version>0.11.4.1</jndi.version>
-      <maven.release.version>2.5.3</maven.release.version>
-      <metrics.version>3.1.2</metrics.version>
-      <mockito.version>1.10.19</mockito.version>
-      <pax.exam.version>4.8.0</pax.exam.version>
-      <pax.url.version>2.4.5</pax.url.version>
-      <slf4j.version>1.7.16</slf4j.version>
-      <log4j.version>2.5</log4j.version>
-   </properties>
 
    <parent>
       <groupId>org.sonatype.oss</groupId>
@@ -92,13 +101,25 @@
       <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-csv</artifactId>
-         <version>1.2</version>
+         <version>${commons.csv.version}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.mockito</groupId>
-         <artifactId>mockito-all</artifactId>
+         <artifactId>mockito-core</artifactId>
          <version>${mockito.version}</version>
+         <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.hamcrest</groupId>
+               <artifactId>hamcrest-core</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>${junit.version}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -106,6 +127,18 @@
          <artifactId>javassist</artifactId>
          <version>${javassist.version}</version>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>io.micrometer</groupId>
+         <artifactId>micrometer-core</artifactId>
+         <version>${micrometer.version}</version>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.postgresql</groupId>
+         <artifactId>postgresql</artifactId>
+         <version>${postgresql.version}</version>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>
@@ -135,6 +168,13 @@
          <groupId>io.dropwizard.metrics</groupId>
          <artifactId>metrics-healthchecks</artifactId>
          <version>${metrics.version}</version>
+         <scope>provided</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>io.prometheus</groupId>
+         <artifactId>simpleclient</artifactId>
+         <version>${simpleclient.version}</version>
          <scope>provided</scope>
          <optional>true</optional>
       </dependency>
@@ -172,6 +212,12 @@
       </dependency>
       <dependency>
          <groupId>org.ops4j.pax.exam</groupId>
+         <artifactId>pax-exam-link-assembly</artifactId>
+         <version>${pax.exam.version}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.ops4j.pax.exam</groupId>
          <artifactId>pax-exam-link-mvn</artifactId>
          <version>${pax.exam.version}</version>
          <scope>test</scope>
@@ -188,6 +234,12 @@
          <version>${pax.url.version}</version>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <version>${h2.version}</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -196,7 +248,7 @@
             <!-- Generate proxies -->
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>1.4.0</version>
+            <version>1.6.0</version>
             <executions>
                <execution>
                   <phase>compile</phase>
@@ -214,11 +266,10 @@
          <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.7.5.201505241946</version>
+            <version>0.7.9</version>
             <executions>
                <!-- Prepares the property pointing to the JaCoCo runtime agent which is passed as VM argument when Maven the Surefire plugin is executed. -->
                <execution>
-                  <id>pre-unit-test</id>
                   <goals>
                      <goal>prepare-agent</goal>
                   </goals>
@@ -228,14 +279,15 @@
                      <!-- Sets the name of the property containing the settings for JaCoCo runtime agent. -->
                      <propertyName>surefireArgLine</propertyName>
                      <excludes>
-                        <exclude>**/org/reploop/hikari/pool/HikariProxy*</exclude>
-                        <exclude>**/org/reploop/hikari/metrics/**</exclude>
+                        <exclude>**/com/zaxxer/hikari/util/JavassistProxyFactory*</exclude>
+                        <exclude>**/com/zaxxer/hikari/pool/HikariProxy*</exclude>
+                        <exclude>**/com/zaxxer/hikari/metrics/**</exclude>
                      </excludes>
                   </configuration>
                </execution>
                <!-- Ensures that the code coverage report for unit tests is created after unit tests have been run. -->
                <execution>
-                  <id>post-unit-test</id>
+                  <id>report</id>
                   <phase>test</phase>
                   <goals>
                      <goal>report</goal>
@@ -243,11 +295,9 @@
                   <configuration>
                      <!-- Sets the path to the file which contains the execution data. -->
                      <dataFile>${project.build.directory}/coverage-reports/jacoco.exec</dataFile>
-                     <!-- Sets the output directory for the code coverage report. -->
-                     <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
                      <excludes>
-                        <exclude>**/org/reploop/hikari/pool/HikariProxy*</exclude>
-                        <exclude>**/org/reploop/hikari/metrics/**</exclude>
+                        <exclude>**/com/zaxxer/hikari/pool/HikariProxy*</exclude>
+                        <exclude>**/com/zaxxer/hikari/metrics/**</exclude>
                      </excludes>
                   </configuration>
                </execution>
@@ -260,7 +310,9 @@
             <version>${felix.bundle.plugin.version}</version>
             <extensions>true</extensions>
             <configuration>
+               <classifier>${artifact.classifier}</classifier>
                <instructions>
+                  <Automatic-Module-Name>org.reploop.hikari</Automatic-Module-Name>
                   <Bundle-Name>HikariCP</Bundle-Name>
                   <Export-Package>
                      org.reploop.hikari,
@@ -282,6 +334,7 @@
                      javax.sql.rowset.spi,
                      com.codahale.metrics;resolution:=optional,
                      com.codahale.metrics.health;resolution:=optional,
+                     io.micrometer.core.instrument;resolution:=optional,
                      org.slf4j;version="[1.6,2)",
                      org.hibernate;resolution:=optional,
                      org.hibernate.cfg;resolution:=optional,
@@ -309,11 +362,12 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-compiler-plugin</artifactId>
-               <version>3.5.1</version>
+               <version>3.7.0</version>
                <extensions>true</extensions>
                <configuration>
                   <source>1.8</source>
                   <target>1.8</target>
+                  <compilerArgs>-Xlint</compilerArgs>
                </configuration>
             </plugin>
 
@@ -330,20 +384,20 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
-               <version>2.19.1</version>
+               <version>2.20</version>
                <configuration>
                   <!-- Sets the VM argument line used when unit tests are run. -->
-                  <argLine>${surefireArgLine}</argLine>
+                  <argLine>${surefireArgLine} ${sureFireOptions9}</argLine>
                   <!-- Skips unit tests if the value of skip.unit.tests property is true -->
                   <skipTests>${skip.unit.tests}</skipTests>
-                  <reuseForks>false</reuseForks>
+                  <reuseForks>${sureFireForks9}</reuseForks>
                </configuration>
             </plugin>
 
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-source-plugin</artifactId>
-               <version>2.4</version>
+               <version>3.0.1</version>
                <configuration>
                   <!-- outputDirectory>/absolute/path/to/the/output/directory</outputDirectory>
                      <finalName>filename-of-generated-jar-file</finalName -->
@@ -362,10 +416,12 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
-               <version>2.10.3</version>
+               <version>2.10.4</version>
                <configuration>
                   <show>public</show>
-                  <!-- excludePackageNames>org.reploop.hikari.*</excludePackageNames -->
+                  <excludePackageNames>
+                     org.reploop.hikari.hibernate:org.reploop.hikari.metrics.*:org.reploop.hikari.pool:org.reploop.hikari.util
+                  </excludePackageNames>
                   <attach>true</attach>
                   <maxmemory>1024m</maxmemory>
                </configuration>
@@ -385,26 +441,20 @@
 
    <profiles>
       <profile>
-         <id>coverage</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.eluder.coveralls</groupId>
-                  <artifactId>coveralls-maven-plugin</artifactId>
-                  <version>4.1.0</version>
-                  <executions>
-                     <execution>
-                        <id>coveralls</id>
-                        <phase>verify</phase>
-                        <goals>
-                           <goal>jacoco</goal>
-                        </goals>
-                        <inherited>false</inherited>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
+         <id>Java9</id>
+         <activation>
+            <jdk>[9,)</jdk>
+         </activation>
+         <properties>
+            <!-- sureFireOptions9>
+               -add-opens java.base/java.net=ALL-UNNAMED
+               -add-opens java.base/java.security=ALL-UNNAMED
+               -add-exports java.base/sun.net.www.protocol.http=ALL-UNNAMED
+               -add-exports java.base/sun.net.www.protocol.https=ALL-UNNAMED
+            </sureFireOptions9 -->
+            <sureFireForks9>true</sureFireForks9>
+            <artifact.classifier>java9</artifact.classifier>
+         </properties>
       </profile>
 
       <profile>

@@ -19,88 +19,83 @@ package org.reploop.hikari.pool;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Wrapper;
 
 /**
  * This is the proxy class for java.sql.ResultSet.
  *
  * @author Brett Wooldridge
  */
-public abstract class ProxyResultSet implements ResultSet {
+public abstract class ProxyResultSet implements ResultSet
+{
    protected final ProxyConnection connection;
    protected final ProxyStatement statement;
-   protected final ResultSet delegate;
+   final ResultSet delegate;
 
-   protected ProxyResultSet(ProxyConnection connection, ProxyStatement statement, ResultSet resultSet) {
+   protected ProxyResultSet(ProxyConnection connection, ProxyStatement statement, ResultSet resultSet)
+   {
       this.connection = connection;
       this.statement = statement;
       this.delegate = resultSet;
    }
 
-   final SQLException checkException(SQLException e) {
+   @SuppressWarnings("unused")
+   final SQLException checkException(SQLException e)
+   {
       return connection.checkException(e);
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public String toString() {
-      return new StringBuilder(64)
-         .append(this.getClass().getSimpleName()).append('@').append(System.identityHashCode(this))
-         .append(" wrapping ")
-         .append(delegate).toString();
+   public String toString()
+   {
+      return this.getClass().getSimpleName() + '@' + System.identityHashCode(this) + " wrapping " + delegate;
    }
 
    // **********************************************************************
    //                 Overridden java.sql.ResultSet Methods
    // **********************************************************************
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public final Statement getStatement() throws SQLException {
+   public final Statement getStatement() throws SQLException
+   {
       return statement;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void updateRow() throws SQLException {
+   public void updateRow() throws SQLException
+   {
       connection.markCommitStateDirty();
       delegate.updateRow();
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void insertRow() throws SQLException {
+   public void insertRow() throws SQLException
+   {
       connection.markCommitStateDirty();
       delegate.insertRow();
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void deleteRow() throws SQLException {
+   public void deleteRow() throws SQLException
+   {
       connection.markCommitStateDirty();
       delegate.deleteRow();
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
    @SuppressWarnings("unchecked")
-   public final <T> T unwrap(Class<T> iface) throws SQLException {
+   public final <T> T unwrap(Class<T> iface) throws SQLException
+   {
       if (iface.isInstance(delegate)) {
          return (T) delegate;
-      } else if (delegate instanceof Wrapper) {
-         return delegate.unwrap(iface);
+      }
+      else if (delegate != null) {
+          return delegate.unwrap(iface);
       }
 
       throw new SQLException("Wrapped ResultSet is not an instance of " + iface);

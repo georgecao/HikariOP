@@ -1,11 +1,26 @@
+/*
+ * Copyright (C) 2013, 2014 Brett Wooldridge
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
 package org.reploop.hikari.pool;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.mocks.StubConnection;
-import org.reploop.hikari.mocks.StubStatement;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,50 +28,61 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
-public class TestProxies {
+import org.junit.Test;
+
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.mocks.StubConnection;
+import org.reploop.hikari.mocks.StubStatement;
+
+public class TestProxies
+{
    @Test
-   public void testProxyCreation() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void testProxyCreation() throws SQLException
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
       config.setConnectionTestQuery("VALUES 1");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
       try (HikariDataSource ds = new HikariDataSource(config)) {
          Connection conn = ds.getConnection();
 
-         Assert.assertNotNull(conn.createStatement(ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE));
-         Assert.assertNotNull(conn.createStatement(ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.HOLD_CURSORS_OVER_COMMIT));
-         Assert.assertNotNull(conn.prepareCall("some sql"));
-         Assert.assertNotNull(conn.prepareCall("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE));
-         Assert.assertNotNull(conn.prepareCall("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.HOLD_CURSORS_OVER_COMMIT));
-         Assert.assertNotNull(conn.prepareStatement("some sql", PreparedStatement.NO_GENERATED_KEYS));
-         Assert.assertNotNull(conn.prepareStatement("some sql", new int[3]));
-         Assert.assertNotNull(conn.prepareStatement("some sql", new String[3]));
-         Assert.assertNotNull(conn.prepareStatement("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE));
-         Assert.assertNotNull(conn.prepareStatement("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.HOLD_CURSORS_OVER_COMMIT));
-         Assert.assertNotNull(conn.toString());
+         assertNotNull(conn.createStatement(ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE));
+         assertNotNull(conn.createStatement(ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.HOLD_CURSORS_OVER_COMMIT));
+         assertNotNull(conn.prepareCall("some sql"));
+         assertNotNull(conn.prepareCall("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE));
+         assertNotNull(conn.prepareCall("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.HOLD_CURSORS_OVER_COMMIT));
+         assertNotNull(conn.prepareStatement("some sql", PreparedStatement.NO_GENERATED_KEYS));
+         assertNotNull(conn.prepareStatement("some sql", new int[3]));
+         assertNotNull(conn.prepareStatement("some sql", new String[3]));
+         assertNotNull(conn.prepareStatement("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE));
+         assertNotNull(conn.prepareStatement("some sql", ResultSet.FETCH_FORWARD, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.HOLD_CURSORS_OVER_COMMIT));
+         assertNotNull(conn.toString());
 
-         Assert.assertTrue(conn.isWrapperFor(Connection.class));
-         Assert.assertTrue(conn.isValid(10));
-         Assert.assertFalse(conn.isClosed());
-         Assert.assertTrue(conn.unwrap(StubConnection.class) instanceof StubConnection);
+         assertTrue(conn.isWrapperFor(Connection.class));
+         assertTrue(conn.isValid(10));
+         assertFalse(conn.isClosed());
+         assertTrue(conn.unwrap(StubConnection.class) instanceof StubConnection);
          try {
             conn.unwrap(TestProxies.class);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testStatementProxy() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void testStatementProxy() throws SQLException
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
       config.setConnectionTestQuery("VALUES 1");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
       try (HikariDataSource ds = new HikariDataSource(config)) {
          Connection conn = ds.getConnection();
@@ -64,28 +90,30 @@ public class TestProxies {
          PreparedStatement stmt = conn.prepareStatement("some sql");
          stmt.executeQuery();
          stmt.executeQuery("some sql");
-         Assert.assertFalse(stmt.isClosed());
-         Assert.assertNotNull(stmt.getGeneratedKeys());
-         Assert.assertNotNull(stmt.getResultSet());
-         Assert.assertNotNull(stmt.getConnection());
-         Assert.assertTrue(stmt.unwrap(StubStatement.class) instanceof StubStatement);
+         assertFalse(stmt.isClosed());
+         assertNotNull(stmt.getGeneratedKeys());
+         assertNotNull(stmt.getResultSet());
+         assertNotNull(stmt.getConnection());
+         assertTrue(stmt.unwrap(StubStatement.class) instanceof StubStatement);
          try {
             stmt.unwrap(TestProxies.class);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testStatementExceptions() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void testStatementExceptions() throws SQLException
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
       config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(1));
       config.setConnectionTestQuery("VALUES 1");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
       try (HikariDataSource ds = new HikariDataSource(config)) {
          Connection conn = ds.getConnection();
@@ -94,177 +122,202 @@ public class TestProxies {
 
          try {
             conn.createStatement();
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.createStatement(0, 0);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.createStatement(0, 0, 0);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("");
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("", 0, 0);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("", 0, 0, 0);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("");
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", new int[0]);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", new String[0]);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0, 0);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0, 0, 0);
-            Assert.fail();
-         } catch (SQLException e) {
+            fail();
+         }
+         catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testOtherExceptions() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void testOtherExceptions() throws SQLException
+   {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
       config.setConnectionTestQuery("VALUES 1");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
       try (HikariDataSource ds = new HikariDataSource(config)) {
-         Connection conn = ds.getConnection();
-         StubConnection stubConnection = conn.unwrap(StubConnection.class);
-         stubConnection.throwException = true;
-
-         try {
-            conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.isReadOnly();
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.setReadOnly(false);
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.setCatalog("");
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.setAutoCommit(false);
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.clearWarnings();
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.isValid(0);
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.isWrapperFor(getClass());
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.unwrap(getClass());
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            conn.close();
-            Assert.fail();
-         } catch (SQLException e) {
-            // pass
-         }
-
-         try {
-            Assert.assertFalse(conn.isValid(0));
-         } catch (SQLException e) {
-            Assert.fail();
+         try (Connection conn = ds.getConnection()) {
+            StubConnection stubConnection = conn.unwrap(StubConnection.class);
+            stubConnection.throwException = true;
+   
+            try {
+               conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.isReadOnly();
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.setReadOnly(false);
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.setCatalog("");
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.setAutoCommit(false);
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.clearWarnings();
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.isValid(0);
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.isWrapperFor(getClass());
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.unwrap(getClass());
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               conn.close();
+               fail();
+            }
+            catch (SQLException e) {
+               // pass
+            }
+   
+            try {
+               assertFalse(conn.isValid(0));
+            }
+            catch (SQLException e) {
+               fail();
+            }
          }
       }
    }

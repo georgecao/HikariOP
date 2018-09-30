@@ -16,13 +16,12 @@
 
 package org.reploop.hikari.pool;
 
-import org.reploop.hikari.util.ClockSource;
 import org.reploop.hikari.util.FastList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.reploop.hikari.util.ClockSource;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.HashSet;
@@ -34,17 +33,20 @@ import java.util.concurrent.Executor;
  *
  * @author Brett Wooldridge
  */
-public abstract class ProxyConnection implements Connection {
-   static final int DIRTY_BIT_READONLY = 0b00001;
-   static final int DIRTY_BIT_AUTOCOMMIT = 0b00010;
-   static final int DIRTY_BIT_ISOLATION = 0b00100;
-   static final int DIRTY_BIT_CATALOG = 0b01000;
-   static final int DIRTY_BIT_NETTIMEOUT = 0b10000;
+public abstract class ProxyConnection implements Connection
+{
+   static final int DIRTY_BIT_READONLY   = 0b000001;
+   static final int DIRTY_BIT_AUTOCOMMIT = 0b000010;
+   static final int DIRTY_BIT_ISOLATION  = 0b000100;
+   static final int DIRTY_BIT_CATALOG    = 0b001000;
+   static final int DIRTY_BIT_NETTIMEOUT = 0b010000;
+   static final int DIRTY_BIT_SCHEMA     = 0b100000;
 
    private static final Logger LOGGER;
-   private static final Set<String> SQL_ERRORS;
-   private static final ClockSource clockSource;
+   private static final Set<String> ERROR_STATES;
+   private static final Set<Integer> ERROR_CODES;
 
+   @SuppressWarnings("WeakerAccess")
    protected Connection delegate;
 
    private final PoolEntry poolEntry;
@@ -60,19 +62,24 @@ public abstract class ProxyConnection implements Connection {
    private int networkTimeout;
    private int transactionIsolation;
    private String dbcatalog;
+   private String dbschema;
 
    // static initializer
    static {
       LOGGER = LoggerFactory.getLogger(ProxyConnection.class);
-      clockSource = ClockSource.INSTANCE;
 
-      SQL_ERRORS = new HashSet<>();
-      SQL_ERRORS.add("57P01"); // ADMIN SHUTDOWN
-      SQL_ERRORS.add("57P02"); // CRASH SHUTDOWN
-      SQL_ERRORS.add("57P03"); // CANNOT CONNECT NOW
-      SQL_ERRORS.add("01002"); // SQL92 disconnect error
-      SQL_ERRORS.add("JZ0C0"); // Sybase disconnect error
-      SQL_ERRORS.add("JZ0C1"); // Sybase disconnect error
+      ERROR_STATES = new HashSet<>();
+      ERROR_STATES.add("0A000"); // FEATURE UNSUPPORTED
+      ERROR_STATES.add("57P01"); // ADMIN SHUTDOWN
+      ERROR_STATES.add("57P02"); // CRASH SHUTDOWN
+      ERROR_STATES.add("57P03"); // CANNOT CONNECT NOW
+      ERROR_STATES.add("01002"); // SQL92 disconnect error
+      ERROR_STATES.add("JZ0C0"); // Sybase disconnect error
+      ERROR_STATES.add("JZ0C1"); // Sybase disconnect error
+
+      ERROR_CODES = new HashSet<>();
+      ERROR_CODES.add(500150);
+      ERROR_CODES.add(2399);
    }
 
    protected ProxyConnection(final PoolEntry poolEntry, final Connection connection, final FastList<Statement> openStatements, final ProxyLeakTask leakTask, final long now, final boolean isReadOnly, final boolean isAutoCommit) {
@@ -85,38 +92,44 @@ public abstract class ProxyConnection implements Connection {
       this.isAutoCommit = isAutoCommit;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public final String toString() {
-      return new StringBuilder(64)
-         .append(this.getClass().getSimpleName()).append('@').append(System.identityHashCode(this))
-         .append(" wrapping ")
-         .append(delegate).toString();
+   public final String toString()
+   {
+      return this.getClass().getSimpleName() + '@' + System.identityHashCode(this) + " wrapping " + delegate;
    }
 
    // ***********************************************************************
    //                     Connection State Accessors
    // ***********************************************************************
 
-   final boolean getAutoCommitState() {
+   final boolean getAutoCommitState()
+   {
       return isAutoCommit;
    }
 
-   final String getCatalogState() {
+   final String getCatalogState()
+   {
       return dbcatalog;
    }
 
-   final int getTransactionIsolationState() {
+   final String getSchemaState()
+   {
+      return dbschema;
+   }
+
+   final int getTransactionIsolationState()
+   {
       return transactionIsolation;
    }
 
-   final boolean getReadOnlyState() {
+   final boolean getReadOnlyState()
+   {
       return isReadOnly;
    }
 
-   final int getNetworkTimeoutState() {
+   final int getNetworkTimeoutState()
+   {
       return networkTimeout;
    }
 
@@ -124,62 +137,74 @@ public abstract class ProxyConnection implements Connection {
    //                          Internal methods
    // ***********************************************************************
 
-   final PoolEntry getPoolEntry() {
+   final PoolEntry getPoolEntry()
+   {
       return poolEntry;
    }
 
-   final SQLException checkException(final SQLException sqle) {
-      final String sqlState = sqle.getSQLState();
-      if (sqlState != null && delegate != ClosedConnection.CLOSED_CONNECTION) {
-         if (sqlState.startsWith("08") || SQL_ERRORS.contains(sqlState)) { // broken connection
+   final SQLException checkException(SQLException sqle)
+   {
+      SQLException nse = sqle;
+      for (int depth = 0; delegate != ClosedConnection.CLOSED_CONNECTION && nse != null && depth < 10; depth++) {
+         final String sqlState = nse.getSQLState();
+         if (sqlState != null && sqlState.startsWith("08") || ERROR_STATES.contains(sqlState) || ERROR_CODES.contains(nse.getErrorCode())) {
+            // broken connection
             LOGGER.warn("{} - Connection {} marked as broken because of SQLSTATE({}), ErrorCode({})",
-               poolEntry.getPoolName(), delegate, sqlState, sqle.getErrorCode(), sqle);
+                        poolEntry.getPoolName(), delegate, sqlState, nse.getErrorCode(), nse);
             leakTask.cancel();
             poolEntry.evict("(connection is broken)");
             delegate = ClosedConnection.CLOSED_CONNECTION;
-         } else {
-            final SQLException nse = sqle.getNextException();
-            if (nse != null && nse != sqle) {
-               checkException(nse);
-            }
+         }
+         else {
+            nse = nse.getNextException();
          }
       }
+
       return sqle;
    }
 
-   final void untrackStatement(final Statement statement) {
+   final synchronized void untrackStatement(final Statement statement)
+   {
       openStatements.remove(statement);
    }
 
-   final void markCommitStateDirty() {
+   final void markCommitStateDirty()
+   {
       if (isAutoCommit) {
-         lastAccess = clockSource.currentTime();
-      } else {
+         lastAccess = ClockSource.currentTime();
+      }
+      else {
          isCommitStateDirty = true;
       }
    }
 
-   void cancelLeakTask() {
+   void cancelLeakTask()
+   {
       leakTask.cancel();
    }
 
-   private final <T extends Statement> T trackStatement(final T statement) {
+   private synchronized <T extends Statement> T trackStatement(final T statement)
+   {
       openStatements.add(statement);
 
       return statement;
    }
 
-   private final void closeStatements() {
+   @SuppressWarnings("EmptyTryBlock")
+   private synchronized void closeStatements()
+   {
       final int size = openStatements.size();
       if (size > 0) {
          for (int i = 0; i < size && delegate != ClosedConnection.CLOSED_CONNECTION; i++) {
-            try {
-               final Statement statement = openStatements.get(i);
-               if (statement != null) {
-                  statement.close();
-               }
-            } catch (SQLException e) {
-               checkException(e);
+            try (Statement ignored = openStatements.get(i)) {
+               // automatic resource cleanup
+            }
+            catch (SQLException e) {
+               LOGGER.warn("{} - Connection {} marked as broken because of an exception closing open statements during Connection.close()",
+                           poolEntry.getPoolName(), delegate);
+               leakTask.cancel();
+               poolEntry.evict("(exception closing Statements during Connection.close())");
+               delegate = ClosedConnection.CLOSED_CONNECTION;
             }
          }
 
@@ -191,11 +216,10 @@ public abstract class ProxyConnection implements Connection {
    //              "Overridden" java.sql.Connection Methods
    // **********************************************************************
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public final void close() throws SQLException {
+   public final void close() throws SQLException
+   {
       // Closing statements can cause connection eviction, so this must run before the conditional below
       closeStatements();
 
@@ -203,233 +227,231 @@ public abstract class ProxyConnection implements Connection {
          leakTask.cancel();
 
          try {
-            if (isCommitStateDirty && !isAutoCommit && !isReadOnly) {
+            if (isCommitStateDirty && !isAutoCommit) {
                delegate.rollback();
-               lastAccess = clockSource.currentTime();
+               lastAccess = ClockSource.currentTime();
                LOGGER.debug("{} - Executed rollback on connection {} due to dirty commit state on close().", poolEntry.getPoolName(), delegate);
             }
 
             if (dirtyBits != 0) {
                poolEntry.resetConnectionState(this, dirtyBits);
-               lastAccess = clockSource.currentTime();
+               lastAccess = ClockSource.currentTime();
             }
 
             delegate.clearWarnings();
-         } catch (SQLException e) {
+         }
+         catch (SQLException e) {
             // when connections are aborted, exceptions are often thrown that should not reach the application
             if (!poolEntry.isMarkedEvicted()) {
                throw checkException(e);
             }
-         } finally {
+         }
+         finally {
             delegate = ClosedConnection.CLOSED_CONNECTION;
             poolEntry.recycle(lastAccess);
          }
       }
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public boolean isClosed() throws SQLException {
+   @SuppressWarnings("RedundantThrows")
+   public boolean isClosed() throws SQLException
+   {
       return (delegate == ClosedConnection.CLOSED_CONNECTION);
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public Statement createStatement() throws SQLException {
+   public Statement createStatement() throws SQLException
+   {
       return ProxyFactory.getProxyStatement(this, trackStatement(delegate.createStatement()));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public Statement createStatement(int resultSetType, int concurrency) throws SQLException {
+   public Statement createStatement(int resultSetType, int concurrency) throws SQLException
+   {
       return ProxyFactory.getProxyStatement(this, trackStatement(delegate.createStatement(resultSetType, concurrency)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public Statement createStatement(int resultSetType, int concurrency, int holdability) throws SQLException {
+   public Statement createStatement(int resultSetType, int concurrency, int holdability) throws SQLException
+   {
       return ProxyFactory.getProxyStatement(this, trackStatement(delegate.createStatement(resultSetType, concurrency, holdability)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public CallableStatement prepareCall(String sql) throws SQLException {
+   public CallableStatement prepareCall(String sql) throws SQLException
+   {
       return ProxyFactory.getProxyCallableStatement(this, trackStatement(delegate.prepareCall(sql)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public CallableStatement prepareCall(String sql, int resultSetType, int concurrency) throws SQLException {
+   public CallableStatement prepareCall(String sql, int resultSetType, int concurrency) throws SQLException
+   {
       return ProxyFactory.getProxyCallableStatement(this, trackStatement(delegate.prepareCall(sql, resultSetType, concurrency)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public CallableStatement prepareCall(String sql, int resultSetType, int concurrency, int holdability) throws SQLException {
+   public CallableStatement prepareCall(String sql, int resultSetType, int concurrency, int holdability) throws SQLException
+   {
       return ProxyFactory.getProxyCallableStatement(this, trackStatement(delegate.prepareCall(sql, resultSetType, concurrency, holdability)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public PreparedStatement prepareStatement(String sql) throws SQLException {
+   public PreparedStatement prepareStatement(String sql) throws SQLException
+   {
       return ProxyFactory.getProxyPreparedStatement(this, trackStatement(delegate.prepareStatement(sql)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+   public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException
+   {
       return ProxyFactory.getProxyPreparedStatement(this, trackStatement(delegate.prepareStatement(sql, autoGeneratedKeys)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public PreparedStatement prepareStatement(String sql, int resultSetType, int concurrency) throws SQLException {
+   public PreparedStatement prepareStatement(String sql, int resultSetType, int concurrency) throws SQLException
+   {
       return ProxyFactory.getProxyPreparedStatement(this, trackStatement(delegate.prepareStatement(sql, resultSetType, concurrency)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public PreparedStatement prepareStatement(String sql, int resultSetType, int concurrency, int holdability) throws SQLException {
+   public PreparedStatement prepareStatement(String sql, int resultSetType, int concurrency, int holdability) throws SQLException
+   {
       return ProxyFactory.getProxyPreparedStatement(this, trackStatement(delegate.prepareStatement(sql, resultSetType, concurrency, holdability)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+   public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException
+   {
       return ProxyFactory.getProxyPreparedStatement(this, trackStatement(delegate.prepareStatement(sql, columnIndexes)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+   public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException
+   {
       return ProxyFactory.getProxyPreparedStatement(this, trackStatement(delegate.prepareStatement(sql, columnNames)));
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void commit() throws SQLException {
+   public DatabaseMetaData getMetaData() throws SQLException
+   {
+      markCommitStateDirty();
+      return delegate.getMetaData();
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public void commit() throws SQLException
+   {
       delegate.commit();
       isCommitStateDirty = false;
-      lastAccess = clockSource.currentTime();
+      lastAccess = ClockSource.currentTime();
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void rollback() throws SQLException {
+   public void rollback() throws SQLException
+   {
       delegate.rollback();
       isCommitStateDirty = false;
-      lastAccess = clockSource.currentTime();
+      lastAccess = ClockSource.currentTime();
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void rollback(Savepoint savepoint) throws SQLException {
+   public void rollback(Savepoint savepoint) throws SQLException
+   {
       delegate.rollback(savepoint);
       isCommitStateDirty = false;
-      lastAccess = clockSource.currentTime();
+      lastAccess = ClockSource.currentTime();
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void setAutoCommit(boolean autoCommit) throws SQLException {
+   public void setAutoCommit(boolean autoCommit) throws SQLException
+   {
       delegate.setAutoCommit(autoCommit);
       isAutoCommit = autoCommit;
       dirtyBits |= DIRTY_BIT_AUTOCOMMIT;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void setReadOnly(boolean readOnly) throws SQLException {
+   public void setReadOnly(boolean readOnly) throws SQLException
+   {
       delegate.setReadOnly(readOnly);
       isReadOnly = readOnly;
       isCommitStateDirty = false;
       dirtyBits |= DIRTY_BIT_READONLY;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void setTransactionIsolation(int level) throws SQLException {
+   public void setTransactionIsolation(int level) throws SQLException
+   {
       delegate.setTransactionIsolation(level);
       transactionIsolation = level;
       dirtyBits |= DIRTY_BIT_ISOLATION;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void setCatalog(String catalog) throws SQLException {
+   public void setCatalog(String catalog) throws SQLException
+   {
       delegate.setCatalog(catalog);
       dbcatalog = catalog;
       dirtyBits |= DIRTY_BIT_CATALOG;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+   public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException
+   {
       delegate.setNetworkTimeout(executor, milliseconds);
       networkTimeout = milliseconds;
       dirtyBits |= DIRTY_BIT_NETTIMEOUT;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
    @Override
-   public final boolean isWrapperFor(Class<?> iface) throws SQLException {
-      return iface.isInstance(delegate) || (delegate instanceof Wrapper && delegate.isWrapperFor(iface));
+   public void setSchema(String schema) throws SQLException
+   {
+      delegate.setSchema(schema);
+      dbschema = schema;
+      dirtyBits |= DIRTY_BIT_SCHEMA;
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   /** {@inheritDoc} */
+   @Override
+   public final boolean isWrapperFor(Class<?> iface) throws SQLException
+   {
+      return iface.isInstance(delegate) || (delegate != null && delegate.isWrapperFor(iface));
+   }
+
+   /** {@inheritDoc} */
    @Override
    @SuppressWarnings("unchecked")
-   public final <T> T unwrap(Class<T> iface) throws SQLException {
+   public final <T> T unwrap(Class<T> iface) throws SQLException
+   {
       if (iface.isInstance(delegate)) {
          return (T) delegate;
-      } else if (delegate instanceof Wrapper) {
-         return delegate.unwrap(iface);
+      }
+      else if (delegate != null) {
+          return delegate.unwrap(iface);
       }
 
       throw new SQLException("Wrapped connection is not an instance of " + iface);
@@ -439,28 +461,34 @@ public abstract class ProxyConnection implements Connection {
    //                         Private classes
    // **********************************************************************
 
-   private static final class ClosedConnection {
+   private static final class ClosedConnection
+   {
       static final Connection CLOSED_CONNECTION = getClosedConnection();
 
-      private static Connection getClosedConnection() {
-         InvocationHandler handler = new InvocationHandler() {
-
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-               final String methodName = method.getName();
-               if ("abort".equals(methodName)) {
-                  return Void.TYPE;
-               } else if ("isValid".equals(methodName)) {
-                  return Boolean.FALSE;
-               } else if ("toString".equals(methodName)) {
-                  return ClosedConnection.class.getCanonicalName();
-               }
-
-               throw new SQLException("Connection is closed");
+      private static Connection getClosedConnection()
+      {
+         InvocationHandler handler = (proxy, method, args) -> {
+            final String methodName = method.getName();
+            if ("isClosed".equals(methodName)) {
+               return Boolean.TRUE;
             }
+            else if ("isValid".equals(methodName)) {
+               return Boolean.FALSE;
+            }
+            if ("abort".equals(methodName)) {
+               return Void.TYPE;
+            }
+            if ("close".equals(methodName)) {
+               return Void.TYPE;
+            }
+            else if ("toString".equals(methodName)) {
+               return ClosedConnection.class.getCanonicalName();
+            }
+
+            throw new SQLException("Connection is closed");
          };
 
-         return (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class[]{Connection.class}, handler);
+         return (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class[] { Connection.class }, handler);
       }
    }
 }

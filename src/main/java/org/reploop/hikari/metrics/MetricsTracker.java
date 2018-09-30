@@ -21,20 +21,7 @@ package org.reploop.hikari.metrics;
  *
  * @author Brett Wooldridge
  */
-public class MetricsTracker implements AutoCloseable {
-   public MetricsTracker() {
-   }
-
-   public void recordConnectionAcquiredNanos(final long elapsedAcquiredNanos) {
-   }
-
-   public void recordConnectionUsageMillis(final long elapsedBorrowedMillis) {
-   }
-
-   public void recordConnectionTimeout() {
-   }
-
-   @Override
-   public void close() {
-   }
+@Deprecated
+public class MetricsTracker implements IMetricsTracker
+{
 }

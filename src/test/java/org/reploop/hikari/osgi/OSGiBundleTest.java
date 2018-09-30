@@ -17,6 +17,10 @@ package org.reploop.hikari.osgi;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.model.InitializationError;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
@@ -26,6 +30,7 @@ import org.osgi.framework.BundleContext;
 import javax.inject.Inject;
 import java.io.File;
 
+import static org.reploop.hikari.pool.TestElf.isJava9;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.ops4j.pax.exam.CoreOptions.*;
@@ -33,41 +38,25 @@ import static org.ops4j.pax.exam.CoreOptions.*;
 /**
  * @author lburgazzoli
  */
-@RunWith(PaxExam.class)
-public class OSGiBundleTest {
-   @Inject
-   BundleContext context;
-
-   @Configuration
-   public Option[] config() {
-      return options(
-         systemProperty("org.osgi.framework.storage.clean").value("true"),
-         systemProperty("org.ops4j.pax.logging.DefaultServiceLog.level").value("WARN"),
-         mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
-         mavenBundle("org.slf4j", "slf4j-simple", "1.7.5").noStart(),
-         mavenBundle("org.javassist", "javassist", "3.19.0-GA"),
-         new File("target/classes").exists()
-            ? bundle("reference:file:target/classes")
-            : bundle("reference:file:../target/classes"),
-         junitBundles(),
-         cleanCaches()
-      );
-   }
-
+@RunWith(OSGiBundleTest.ConditionalPaxExam.class)
+public class OSGiBundleTest
+{
    @Test
-   public void checkInject() {
+   public void checkInject()
+   {
       assertNotNull(context);
    }
 
    @Test
-   public void checkBundle() {
+   public void checkBundle()
+   {
       Boolean bundleFound = false;
       Boolean bundleActive = false;
 
       Bundle[] bundles = context.getBundles();
       for (Bundle bundle : bundles) {
          if (bundle != null) {
-            if (bundle.getSymbolicName().equals("com.zaxxer.HikariCP")) {
+            if (bundle.getSymbolicName().equals("org.reploop.HikariCP")) {
                bundleFound = true;
                if (bundle.getState() == Bundle.ACTIVE) {
                   bundleActive = true;
@@ -78,5 +67,47 @@ public class OSGiBundleTest {
 
       assertTrue(bundleFound);
       assertTrue(bundleActive);
+   }
+
+   @Inject
+   BundleContext context;
+
+   @Configuration
+   public Option[] config()
+   {
+      return options(
+         systemProperty("org.osgi.framework.storage.clean").value("true"),
+         systemProperty("org.ops4j.pax.logging.DefaultServiceLog.level").value("WARN"),
+         mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
+         mavenBundle("org.slf4j", "slf4j-simple", "1.7.5").noStart(),
+         new File("target/classes").exists()
+            ? bundle("reference:file:target/classes")
+            : bundle("reference:file:../target/classes"),
+         junitBundles(),
+         cleanCaches()
+      );
+   }
+
+   public static class ConditionalPaxExam extends PaxExam
+   {
+      public ConditionalPaxExam(Class<?> klass) throws InitializationError {
+         super(klass);
+      }
+
+      @Override
+      public void run(RunNotifier notifier) {
+         if (!isJava9()) {
+            super.run(notifier);
+         }
+      }
+
+      @Override
+      public void filter(Filter filter) throws NoTestsRemainException {
+         if (isJava9()) {
+            throw new NoTestsRemainException();
+         }
+
+         super.filter(filter);
+      }
    }
 }

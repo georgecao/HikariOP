@@ -21,7 +21,8 @@ package org.reploop.hikari;
  *
  * @author Brett Wooldridge
  */
-public interface HikariConfigMXBean {
+public interface HikariConfigMXBean
+{
    /**
     * Get the maximum number of milliseconds that a client will wait for a connection from the pool. If this
     * time is exceeded without a connection becoming available, a SQLException will be thrown from
@@ -111,12 +112,9 @@ public interface HikariConfigMXBean {
    void setMaxLifetime(long maxLifetimeMs);
 
    /**
-    * The property controls the maximum size that the pool is allowed to reach, including both idle and in-use
-    * connections. Basically this value will determine the maximum number of actual connections to the database
-    * backend.
-    * <p>
-    * When the pool reaches this size, and no idle connections are available, calls to getConnection() will
-    * block for up to connectionTimeout milliseconds before timing out.
+    * The property controls the minimum number of idle connections that HikariCP tries to maintain in the pool,
+    * including both idle and in-use connections. If the idle connections dip below this value, HikariCP will
+    * make a best effort to restore them quickly and efficiently.
     *
     * @return the minimum number of connections in the pool
     */
@@ -176,4 +174,20 @@ public interface HikariConfigMXBean {
     * @return the name of the connection pool
     */
    String getPoolName();
+
+   /**
+    * Get the default catalog name to be set on connections.
+    *
+    * @return the default catalog name
+    */
+   String getCatalog();
+
+   /**
+    * Set the default catalog name to be set on connections.
+    * <p>
+    * WARNING: THIS VALUE SHOULD ONLY BE CHANGED WHILE THE POOL IS SUSPENDED, AFTER CONNECTIONS HAVE BEEN EVICTED.
+    *
+    * @param catalog the catalog name, or null
+    */
+   void setCatalog(String catalog);
 }

@@ -15,24 +15,141 @@
  */
 package org.reploop.hikari.pool;
 
-import org.junit.Test;
 import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariConfigMXBean;
 import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.HikariPoolMXBean;
+import org.reploop.hikari.mocks.StubDataSource;
+import org.junit.Test;
 
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
-public class TestMBean {
+import static org.reploop.hikari.pool.TestElf.getUnsealedConfig;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.reploop.hikari.util.UtilityElf.quietlySleep;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+public class TestMBean
+{
    @Test
-   public void testMBeanRegistration() throws SQLException {
-      HikariConfig config = new HikariConfig();
+   public void testMBeanRegistration() {
+      HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
       config.setRegisterMbeans(true);
       config.setConnectionTimeout(2800);
       config.setConnectionTestQuery("VALUES 1");
-      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
-      HikariDataSource ds = new HikariDataSource(config);
-      ds.close();
+      new HikariDataSource(config).close();
+   }
+
+   @Test
+   public void testMBeanReporting() throws SQLException, InterruptedException, MalformedObjectNameException {
+      HikariConfig config = newHikariConfig();
+      config.setMinimumIdle(3);
+      config.setMaximumPoolSize(5);
+      config.setRegisterMbeans(true);
+      config.setConnectionTimeout(2800);
+      config.setConnectionTestQuery("VALUES 1");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
+
+      System.setProperty("org.reploop.hikari.housekeeping.periodMs", "100");
+
+      try (HikariDataSource ds = new HikariDataSource(config)) {
+
+         getUnsealedConfig(ds).setIdleTimeout(3000);
+
+         TimeUnit.SECONDS.sleep(1);
+
+         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+         ObjectName poolName = new ObjectName("org.reploop.hikari:type=Pool (testMBeanReporting)");
+         HikariPoolMXBean hikariPoolMXBean = JMX.newMXBeanProxy(mBeanServer, poolName, HikariPoolMXBean.class);
+
+         assertEquals(0, hikariPoolMXBean.getActiveConnections());
+         assertEquals(3, hikariPoolMXBean.getIdleConnections());
+
+         try (Connection ignored = ds.getConnection()) {
+            assertEquals(1, hikariPoolMXBean.getActiveConnections());
+
+            TimeUnit.SECONDS.sleep(1);
+
+            assertEquals(3, hikariPoolMXBean.getIdleConnections());
+            assertEquals(4, hikariPoolMXBean.getTotalConnections());
+         }
+
+         TimeUnit.SECONDS.sleep(2);
+
+         assertEquals(0, hikariPoolMXBean.getActiveConnections());
+         assertEquals(3, hikariPoolMXBean.getIdleConnections());
+         assertEquals(3, hikariPoolMXBean.getTotalConnections());
+
+      }
+      finally {
+         System.clearProperty("org.reploop.hikari.housekeeping.periodMs");
+      }
+   }
+
+   @Test
+   public void testMBeanChange() {
+      HikariConfig config = newHikariConfig();
+      config.setMinimumIdle(3);
+      config.setMaximumPoolSize(5);
+      config.setRegisterMbeans(true);
+      config.setConnectionTimeout(2800);
+      config.setConnectionTestQuery("VALUES 1");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
+
+      try (HikariDataSource ds = new HikariDataSource(config)) {
+         HikariConfigMXBean hikariConfigMXBean = ds.getHikariConfigMXBean();
+         hikariConfigMXBean.setIdleTimeout(3000);
+
+         assertEquals(3000, ds.getIdleTimeout());
+      }
+   }
+
+   @Test
+   public void testMBeanConnectionTimeoutChange() throws SQLException {
+      HikariConfig config = newHikariConfig();
+      config.setMinimumIdle(1);
+      config.setMaximumPoolSize(2);
+      config.setRegisterMbeans(true);
+      config.setConnectionTimeout(2800);
+      config.setConnectionTestQuery("VALUES 1");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
+
+      System.setProperty("org.reploop.hikari.housekeeping.periodMs", "250");
+
+      try (HikariDataSource ds = new HikariDataSource(config)) {
+         HikariConfigMXBean hikariConfigMXBean = ds.getHikariConfigMXBean();
+         assertEquals(2800, hikariConfigMXBean.getConnectionTimeout());
+
+         final StubDataSource stubDataSource = ds.unwrap(StubDataSource.class);
+         // connection acquisition takes more than 0 ms in a real system
+         stubDataSource.setConnectionAcquistionTime(1200);
+
+         hikariConfigMXBean.setConnectionTimeout(1000);
+
+         quietlySleep(500);
+
+         try (Connection conn1 = ds.getConnection();
+              Connection conn2 = ds.getConnection()) {
+            fail("Connection should have timed out.");
+         }
+         catch (SQLException e) {
+            assertEquals(1000, ds.getConnectionTimeout());
+         }
+      }
+      finally {
+         System.clearProperty("org.reploop.hikari.housekeeping.periodMs");
+      }
    }
 }
