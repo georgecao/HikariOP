@@ -5,15 +5,11 @@ import org.reploop.hikari.mocks.TestObject;
 
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
-public class PropertyElfTest
-{
+public class PropertyElfTest {
    @Test
-   public void setTargetFromProperties() throws Exception
-   {
+   public void setTargetFromProperties() throws Exception {
       Properties properties = new Properties();
       properties.setProperty("string", "aString");
       properties.setProperty("testObject", "org.reploop.hikari.mocks.TestObject");
@@ -25,8 +21,7 @@ public class PropertyElfTest
    }
 
    @Test
-   public void setTargetFromPropertiesNotAClass() throws Exception
-   {
+   public void setTargetFromPropertiesNotAClass() throws Exception {
       Properties properties = new Properties();
       properties.setProperty("string", "aString");
       properties.setProperty("testObject", "it is not a class");
@@ -34,8 +29,7 @@ public class PropertyElfTest
       try {
          PropertyElf.setTargetFromProperties(testObject, properties);
          fail("Could never come here");
-      }
-      catch (RuntimeException e) {
+      } catch (RuntimeException e) {
          assertEquals("argument type mismatch", e.getCause().getMessage());
       }
    }

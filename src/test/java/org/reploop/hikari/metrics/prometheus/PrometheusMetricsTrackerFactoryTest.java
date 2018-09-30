@@ -1,10 +1,10 @@
 package org.reploop.hikari.metrics.prometheus;
 
-import org.reploop.hikari.metrics.PoolStats;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.After;
 import org.junit.Test;
+import org.reploop.hikari.metrics.PoolStats;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -32,7 +32,7 @@ public class PrometheusMetricsTrackerFactoryTest {
    }
 
    @After
-   public void clearCollectorRegistry(){
+   public void clearCollectorRegistry() {
       CollectorRegistry.defaultRegistry.clear();
    }
 

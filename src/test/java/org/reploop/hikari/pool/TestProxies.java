@@ -12,15 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.mocks.StubConnection;
+import org.reploop.hikari.mocks.StubStatement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,18 +28,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import static org.junit.Assert.*;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.mocks.StubConnection;
-import org.reploop.hikari.mocks.StubStatement;
-
-public class TestProxies
-{
+public class TestProxies {
    @Test
-   public void testProxyCreation() throws SQLException
-   {
+   public void testProxyCreation() throws SQLException {
       HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -68,16 +62,14 @@ public class TestProxies
          try {
             conn.unwrap(TestProxies.class);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testStatementProxy() throws SQLException
-   {
+   public void testStatementProxy() throws SQLException {
       HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -98,16 +90,14 @@ public class TestProxies
          try {
             stmt.unwrap(TestProxies.class);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testStatementExceptions() throws SQLException
-   {
+   public void testStatementExceptions() throws SQLException {
       HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -123,104 +113,91 @@ public class TestProxies
          try {
             conn.createStatement();
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.createStatement(0, 0);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.createStatement(0, 0, 0);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("");
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("", 0, 0);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("", 0, 0, 0);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("");
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", new int[0]);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", new String[0]);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0, 0);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0, 0, 0);
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testOtherExceptions() throws SQLException
-   {
+   public void testOtherExceptions() throws SQLException {
       HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -231,91 +208,80 @@ public class TestProxies
          try (Connection conn = ds.getConnection()) {
             StubConnection stubConnection = conn.unwrap(StubConnection.class);
             stubConnection.throwException = true;
-   
+
             try {
                conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.isReadOnly();
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.setReadOnly(false);
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.setCatalog("");
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.setAutoCommit(false);
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.clearWarnings();
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.isValid(0);
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.isWrapperFor(getClass());
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.unwrap(getClass());
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                conn.close();
                fail();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                // pass
             }
-   
+
             try {
                assertFalse(conn.isValid(0));
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                fail();
             }
          }

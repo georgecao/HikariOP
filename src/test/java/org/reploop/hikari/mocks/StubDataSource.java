@@ -18,20 +18,17 @@ package org.reploop.hikari.mocks;
 
 import org.reploop.hikari.util.UtilityElf;
 
+import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 
-import javax.sql.DataSource;
-
 /**
- *
  * @author Brett Wooldridge
  */
-public class StubDataSource implements DataSource
-{
+public class StubDataSource implements DataSource {
    private String user;
    private String password;
    private PrintWriter logWriter;
@@ -39,70 +36,71 @@ public class StubDataSource implements DataSource
    private long connectionAcquistionTime = 0;
    private int loginTimeout;
 
-   public String getUser()
-   {
+   public String getUser() {
       return user;
    }
 
-   public void setUser(String user)
-   {
+   public void setUser(String user) {
       this.user = user;
    }
 
-   public String getPassword()
-   {
+   public String getPassword() {
       return password;
    }
 
-   public void setPassword(String password)
-   {
+   public void setPassword(String password) {
       this.password = password;
    }
 
-   public void setURL(String url)
-   {
+   public void setURL(String url) {
       // we don't care
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public PrintWriter getLogWriter() throws SQLException
-   {
+   public PrintWriter getLogWriter() throws SQLException {
       return logWriter;
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public void setLogWriter(PrintWriter out) throws SQLException
-   {
+   public void setLogWriter(PrintWriter out) throws SQLException {
       this.logWriter = out;
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public void setLoginTimeout(int seconds) throws SQLException
-   {
+   public void setLoginTimeout(int seconds) throws SQLException {
       this.loginTimeout = seconds;
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public int getLoginTimeout() throws SQLException
-   {
+   public int getLoginTimeout() throws SQLException {
       return loginTimeout;
    }
 
-   /** {@inheritDoc} */
-   public Logger getParentLogger() throws SQLFeatureNotSupportedException
-   {
+   /**
+    * {@inheritDoc}
+    */
+   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
       return null;
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @SuppressWarnings("unchecked")
    @Override
-   public <T> T unwrap(Class<T> iface) throws SQLException
-   {
+   public <T> T unwrap(Class<T> iface) throws SQLException {
       if (iface.isInstance(this)) {
          return (T) this;
       }
@@ -110,17 +108,19 @@ public class StubDataSource implements DataSource
       throw new SQLException("Wrapped DataSource is not an instance of " + iface);
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public boolean isWrapperFor(Class<?> iface) throws SQLException
-   {
+   public boolean isWrapperFor(Class<?> iface) throws SQLException {
       return false;
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public Connection getConnection() throws SQLException
-   {
+   public Connection getConnection() throws SQLException {
       if (throwException != null) {
          throw throwException;
       }
@@ -131,15 +131,15 @@ public class StubDataSource implements DataSource
       return new StubConnection();
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public Connection getConnection(String username, String password) throws SQLException
-   {
+   public Connection getConnection(String username, String password) throws SQLException {
       return new StubConnection();
    }
 
-   public void setThrowException(SQLException e)
-   {
+   public void setThrowException(SQLException e) {
       this.throwException = e;
    }
 

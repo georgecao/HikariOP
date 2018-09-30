@@ -12,11 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,50 +29,45 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.junit.Test;
-
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 
 /**
  * @author Matthew Tambara (matthew.tambara@liferay.com)
  */
-public class ConcurrentCloseConnectionTest
-{
+public class ConcurrentCloseConnectionTest {
    @Test
-   public void testConcurrentClose() throws Exception
-   {
-	  HikariConfig config = newHikariConfig();
+   public void testConcurrentClose() throws Exception {
+      HikariConfig config = newHikariConfig();
       config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
-	  try (HikariDataSource ds = new HikariDataSource(config);
-	      final Connection connection = ds.getConnection()) {
+      try (HikariDataSource ds = new HikariDataSource(config);
+           final Connection connection = ds.getConnection()) {
 
-		  ExecutorService executorService = Executors.newFixedThreadPool(10);
+         ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-		  List<Future<?>> futures = new ArrayList<>();
+         List<Future<?>> futures = new ArrayList<>();
 
-		  for (int i = 0; i < 500; i++) {
-			  final PreparedStatement preparedStatement =
-				  connection.prepareStatement("");
+         for (int i = 0; i < 500; i++) {
+            final PreparedStatement preparedStatement =
+               connection.prepareStatement("");
 
-			  futures.add(executorService.submit(new Callable<Void>() {
+            futures.add(executorService.submit(new Callable<Void>() {
 
-				  @Override
-				  public Void call() throws Exception {
-					  preparedStatement.close();
+               @Override
+               public Void call() throws Exception {
+                  preparedStatement.close();
 
-					  return null;
-				  }
+                  return null;
+               }
 
-			  }));
-		  }
+            }));
+         }
 
-		  executorService.shutdown();
+         executorService.shutdown();
 
-		  for (Future<?> future : futures) {
-			  future.get();
-		  }
-	  }
+         for (Future<?> future : futures) {
+            future.get();
+         }
+      }
    }
 }

@@ -12,64 +12,59 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.reploop.hikari.pool.TestElf.getPool;
-import static org.reploop.hikari.util.UtilityElf.quietlySleep;
-import static org.junit.Assert.assertSame;
+import org.junit.Assert;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.Assert.assertSame;
+import static org.reploop.hikari.pool.TestElf.getPool;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.reploop.hikari.util.UtilityElf.quietlySleep;
 
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
+public class RampUpDown {
+   @Test
+   public void rampUpDownTest() throws SQLException {
+      HikariConfig config = newHikariConfig();
+      config.setMinimumIdle(5);
+      config.setMaximumPoolSize(60);
+      config.setInitializationFailTimeout(0);
+      config.setConnectionTestQuery("VALUES 1");
+      config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
-public class RampUpDown
-{
-    @Test
-    public void rampUpDownTest() throws SQLException
-    {
-        HikariConfig config = newHikariConfig();
-        config.setMinimumIdle(5);
-        config.setMaximumPoolSize(60);
-        config.setInitializationFailTimeout(0);
-        config.setConnectionTestQuery("VALUES 1");
-        config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
+      System.setProperty("org.reploop.hikari.housekeeping.periodMs", "250");
 
-        System.setProperty("org.reploop.hikari.housekeeping.periodMs", "250");
+      try (HikariDataSource ds = new HikariDataSource(config)) {
 
-        try (HikariDataSource ds = new HikariDataSource(config)) {
+         ds.setIdleTimeout(1000);
+         HikariPool pool = getPool(ds);
 
-           ds.setIdleTimeout(1000);
-           HikariPool pool = getPool(ds);
+         // wait two housekeeping periods so we don't fail if this part of test runs too quickly
+         quietlySleep(500);
 
-           // wait two housekeeping periods so we don't fail if this part of test runs too quickly
-           quietlySleep(500);
+         Assert.assertSame("Total connections not as expected", 5, pool.getTotalConnections());
 
-           Assert.assertSame("Total connections not as expected", 5, pool.getTotalConnections());
+         Connection[] connections = new Connection[ds.getMaximumPoolSize()];
+         for (int i = 0; i < connections.length; i++) {
+            connections[i] = ds.getConnection();
+         }
 
-           Connection[] connections = new Connection[ds.getMaximumPoolSize()];
-           for (int i = 0; i < connections.length; i++)
-           {
-               connections[i] = ds.getConnection();
-           }
+         assertSame("Total connections not as expected", 60, pool.getTotalConnections());
 
-           assertSame("Total connections not as expected", 60, pool.getTotalConnections());
+         for (Connection connection : connections) {
+            connection.close();
+         }
 
-           for (Connection connection : connections)
-           {
-               connection.close();
-           }
+         quietlySleep(500);
 
-           quietlySleep(500);
-
-           assertSame("Total connections not as expected", 5, pool.getTotalConnections());
-        }
-    }
+         assertSame("Total connections not as expected", 5, pool.getTotalConnections());
+      }
+   }
 }

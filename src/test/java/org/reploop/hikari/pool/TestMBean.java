@@ -15,12 +15,12 @@
  */
 package org.reploop.hikari.pool;
 
+import org.junit.Test;
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariConfigMXBean;
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.HikariPoolMXBean;
 import org.reploop.hikari.mocks.StubDataSource;
-import org.junit.Test;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;
@@ -31,14 +31,13 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.reploop.hikari.pool.TestElf.getUnsealedConfig;
 import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 import static org.reploop.hikari.util.UtilityElf.quietlySleep;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-public class TestMBean
-{
+public class TestMBean {
    @Test
    public void testMBeanRegistration() {
       HikariConfig config = newHikariConfig();
@@ -92,8 +91,7 @@ public class TestMBean
          assertEquals(3, hikariPoolMXBean.getIdleConnections());
          assertEquals(3, hikariPoolMXBean.getTotalConnections());
 
-      }
-      finally {
+      } finally {
          System.clearProperty("org.reploop.hikari.housekeeping.periodMs");
       }
    }
@@ -143,12 +141,10 @@ public class TestMBean
          try (Connection conn1 = ds.getConnection();
               Connection conn2 = ds.getConnection()) {
             fail("Connection should have timed out.");
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             assertEquals(1000, ds.getConnectionTimeout());
          }
-      }
-      finally {
+      } finally {
          System.clearProperty("org.reploop.hikari.housekeeping.periodMs");
       }
    }

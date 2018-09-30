@@ -12,38 +12,36 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 /**
  *
  */
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.reploop.hikari.util.ClockSource.currentTime;
-import static org.reploop.hikari.util.ClockSource.elapsedMillis;
-import static org.reploop.hikari.util.UtilityElf.quietlySleep;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.mocks.MockDataSource;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.mocks.MockDataSource;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.reploop.hikari.util.ClockSource.currentTime;
+import static org.reploop.hikari.util.ClockSource.elapsedMillis;
+import static org.reploop.hikari.util.UtilityElf.quietlySleep;
 
 /**
  * Test for cases when db network connectivity goes down and close is called on existing connections. By default Hikari
  * blocks longer than getMaximumTimeout (it can hang for a lot of time depending on driver timeout settings). Closing
  * async the connections fixes this issue.
- *
  */
 public class TestConnectionCloseBlocking {
    private static volatile boolean shouldFail = false;
@@ -58,20 +56,20 @@ public class TestConnectionCloseBlocking {
 
       long start = currentTime();
       try (HikariDataSource ds = new HikariDataSource(config);
-            Connection connection = ds.getConnection()) {
-            
-            connection.close();
-   
-            // Hikari only checks for validity for connections with lastAccess > 1000 ms so we sleep for 1001 ms to force
-            // Hikari to do a connection validation which will fail and will trigger the connection to be closed
-            quietlySleep(1100L);
-   
-            shouldFail = true;
-   
-            // on physical connection close we sleep 2 seconds
-            try (Connection connection2 = ds.getConnection()) {   
-               assertTrue("Waited longer than timeout", (elapsedMillis(start) < config.getConnectionTimeout()));
-            }
+           Connection connection = ds.getConnection()) {
+
+         connection.close();
+
+         // Hikari only checks for validity for connections with lastAccess > 1000 ms so we sleep for 1001 ms to force
+         // Hikari to do a connection validation which will fail and will trigger the connection to be closed
+         quietlySleep(1100L);
+
+         shouldFail = true;
+
+         // on physical connection close we sleep 2 seconds
+         try (Connection connection2 = ds.getConnection()) {
+            assertTrue("Waited longer than timeout", (elapsedMillis(start) < config.getConnectionTimeout()));
+         }
       } catch (SQLException e) {
          assertTrue("getConnection failed because close connection took longer than timeout", (elapsedMillis(start) < config.getConnectionTimeout()));
       }

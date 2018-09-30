@@ -12,37 +12,27 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
-
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.reploop.hikari.pool.TestElf.getPool;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 
-public class ExceptionTest
-{
+import java.sql.*;
+
+import static org.junit.Assert.*;
+import static org.reploop.hikari.pool.TestElf.getPool;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+
+public class ExceptionTest {
    private HikariDataSource ds;
 
    @Before
-   public void setup()
-   {
+   public void setup() {
       HikariConfig config = newHikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(2);
@@ -53,14 +43,12 @@ public class ExceptionTest
    }
 
    @After
-   public void teardown()
-   {
+   public void teardown() {
       ds.close();
    }
 
    @Test
-   public void testException1() throws SQLException
-   {
+   public void testException1() throws SQLException {
       try (Connection connection = ds.getConnection()) {
          assertNotNull(connection);
 
@@ -73,8 +61,7 @@ public class ExceptionTest
          try {
             statement.getMaxFieldSize();
             fail();
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             assertSame(SQLException.class, e.getClass());
          }
       }
@@ -85,8 +72,7 @@ public class ExceptionTest
    }
 
    @Test
-   public void testUseAfterStatementClose() throws SQLException
-   {
+   public void testUseAfterStatementClose() throws SQLException {
       Connection connection = ds.getConnection();
       assertNotNull(connection);
 
@@ -95,23 +81,20 @@ public class ExceptionTest
          statement.getMoreResults();
 
          fail();
-      }
-      catch (SQLException e) {
+      } catch (SQLException e) {
          assertSame("Connection is closed", e.getMessage());
       }
    }
 
    @Test
-   public void testUseAfterClose() throws SQLException
-   {
+   public void testUseAfterClose() throws SQLException {
       try (Connection connection = ds.getConnection()) {
          assertNotNull(connection);
          connection.close();
 
          try (Statement statement = connection.prepareStatement("SELECT some, thing FROM somewhere WHERE something=?")) {
             fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             assertSame("Connection is closed", e.getMessage());
          }
       }

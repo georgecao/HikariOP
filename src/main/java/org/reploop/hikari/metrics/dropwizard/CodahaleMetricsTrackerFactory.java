@@ -21,23 +21,19 @@ import org.reploop.hikari.metrics.IMetricsTracker;
 import org.reploop.hikari.metrics.MetricsTrackerFactory;
 import org.reploop.hikari.metrics.PoolStats;
 
-public final class CodahaleMetricsTrackerFactory implements MetricsTrackerFactory
-{
+public final class CodahaleMetricsTrackerFactory implements MetricsTrackerFactory {
    private final MetricRegistry registry;
 
-   public CodahaleMetricsTrackerFactory(MetricRegistry registry)
-   {
+   public CodahaleMetricsTrackerFactory(MetricRegistry registry) {
       this.registry = registry;
    }
 
-   public MetricRegistry getRegistry()
-   {
+   public MetricRegistry getRegistry() {
       return registry;
    }
 
    @Override
-   public IMetricsTracker create(String poolName, PoolStats poolStats)
-   {
+   public IMetricsTracker create(String poolName, PoolStats poolStats) {
       return new CodaHaleMetricsTracker(poolName, poolStats, registry);
    }
 }

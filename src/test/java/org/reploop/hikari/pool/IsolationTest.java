@@ -12,26 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariDataSource;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
+import org.junit.Test;
+import org.reploop.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.junit.Test;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.reploop.hikari.pool.TestElf.newHikariDataSource;
 
-import org.reploop.hikari.HikariDataSource;
-
-public class IsolationTest
-{
+public class IsolationTest {
    @Test
-   public void testIsolation() throws SQLException
-   {
+   public void testIsolation() throws SQLException {
       try (HikariDataSource ds = newHikariDataSource()) {
          ds.setMinimumIdle(1);
          ds.setMaximumPoolSize(1);
@@ -52,8 +49,7 @@ public class IsolationTest
    }
 
    @Test
-   public void testNonIsolation() throws SQLException
-   {
+   public void testNonIsolation() throws SQLException {
       try (HikariDataSource ds = newHikariDataSource()) {
          ds.setMinimumIdle(1);
          ds.setMaximumPoolSize(1);

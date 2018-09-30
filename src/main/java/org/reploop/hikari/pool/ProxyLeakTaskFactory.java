@@ -24,24 +24,20 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author Brett Wooldridge
  * @author Andreas Brenk
  */
-class ProxyLeakTaskFactory
-{
+class ProxyLeakTaskFactory {
    private ScheduledExecutorService executorService;
    private long leakDetectionThreshold;
 
-   ProxyLeakTaskFactory(final long leakDetectionThreshold, final ScheduledExecutorService executorService)
-   {
+   ProxyLeakTaskFactory(final long leakDetectionThreshold, final ScheduledExecutorService executorService) {
       this.executorService = executorService;
       this.leakDetectionThreshold = leakDetectionThreshold;
    }
 
-   ProxyLeakTask schedule(final PoolEntry poolEntry)
-   {
+   ProxyLeakTask schedule(final PoolEntry poolEntry) {
       return (leakDetectionThreshold == 0) ? ProxyLeakTask.NO_LEAK : scheduleNewTask(poolEntry);
    }
 
-   void updateLeakDetectionThreshold(final long leakDetectionThreshold)
-   {
+   void updateLeakDetectionThreshold(final long leakDetectionThreshold) {
       this.leakDetectionThreshold = leakDetectionThreshold;
    }
 

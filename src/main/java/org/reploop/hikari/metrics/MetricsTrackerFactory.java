@@ -16,12 +16,11 @@
 
 package org.reploop.hikari.metrics;
 
-public interface MetricsTrackerFactory
-{
+public interface MetricsTrackerFactory {
    /**
     * Create an instance of an IMetricsTracker.
     *
-    * @param poolName the name of the pool
+    * @param poolName  the name of the pool
     * @param poolStats a PoolStats instance to use
     * @return a IMetricsTracker implementation instance
     */

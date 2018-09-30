@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.mocks;
 
@@ -21,24 +21,25 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public abstract class StubBaseConnection implements Connection
-{
+public abstract class StubBaseConnection implements Connection {
    public volatile boolean throwException;
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public Statement createStatement() throws SQLException
-   {
+   public Statement createStatement() throws SQLException {
       if (throwException) {
          throw new SQLException();
       }
       return new StubStatement(this);
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public PreparedStatement prepareStatement(String sql) throws SQLException
-   {
+   public PreparedStatement prepareStatement(String sql) throws SQLException {
       if (throwException) {
          throw new SQLException();
       }

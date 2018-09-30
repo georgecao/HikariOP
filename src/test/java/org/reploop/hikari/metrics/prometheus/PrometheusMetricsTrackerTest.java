@@ -12,23 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.metrics.prometheus;
 
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.Before;
 import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLTransientConnectionException;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 
 public class PrometheusMetricsTrackerTest {
 
@@ -40,7 +40,7 @@ public class PrometheusMetricsTrackerTest {
    private static final String[] QUANTILE_LABEL_VALUES = new String[]{"0.5", "0.95", "0.99"};
 
    @Before
-   public void setupCollectorRegistry(){
+   public void setupCollectorRegistry() {
       this.collectorRegistry = new CollectorRegistry();
    }
 

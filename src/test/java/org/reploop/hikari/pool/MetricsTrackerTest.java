@@ -1,29 +1,27 @@
 package org.reploop.hikari.pool;
 
+import org.junit.Test;
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.metrics.IMetricsTracker;
 import org.reploop.hikari.mocks.StubDataSource;
-import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.SQLTransientConnectionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.reploop.hikari.pool.TestElf.newHikariDataSource;
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.reploop.hikari.pool.TestElf.newHikariDataSource;
 
 /**
  * @author wvuong@chariotsolutions.com on 2/16/17.
  */
-public class MetricsTrackerTest
-{
+public class MetricsTrackerTest {
 
    @Test(expected = SQLTransientConnectionException.class)
-   public void connectionTimeoutIsRecorded() throws Exception
-   {
+   public void connectionTimeoutIsRecorded() throws Exception {
       int timeoutMillis = 1000;
       int timeToCreateNewConnectionMillis = timeoutMillis * 2;
 
@@ -51,8 +49,7 @@ public class MetricsTrackerTest
       }
    }
 
-   private static class StubMetricsTracker implements IMetricsTracker
-   {
+   private static class StubMetricsTracker implements IMetricsTracker {
 
       private Long connectionCreatedMillis;
       private Long connectionAcquiredNanos;
@@ -60,26 +57,22 @@ public class MetricsTrackerTest
       private boolean connectionTimeoutRecorded;
 
       @Override
-      public void recordConnectionCreatedMillis(long connectionCreatedMillis)
-      {
+      public void recordConnectionCreatedMillis(long connectionCreatedMillis) {
          this.connectionCreatedMillis = connectionCreatedMillis;
       }
 
       @Override
-      public void recordConnectionAcquiredNanos(long elapsedAcquiredNanos)
-      {
+      public void recordConnectionAcquiredNanos(long elapsedAcquiredNanos) {
          this.connectionAcquiredNanos = elapsedAcquiredNanos;
       }
 
       @Override
-      public void recordConnectionUsageMillis(long elapsedBorrowedMillis)
-      {
+      public void recordConnectionUsageMillis(long elapsedBorrowedMillis) {
          this.connectionBorrowedMillis = elapsedBorrowedMillis;
       }
 
       @Override
-      public void recordConnectionTimeout()
-      {
+      public void recordConnectionTimeout() {
          this.connectionTimeoutRecorded = true;
       }
    }

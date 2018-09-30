@@ -16,51 +16,45 @@
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.util.ClockSource.elapsedMillis;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 import org.apache.logging.log4j.Level;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.mocks.StubConnection;
-import org.reploop.hikari.util.UtilityElf;
 import org.reploop.hikari.util.ClockSource;
+import org.reploop.hikari.util.UtilityElf;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Brett Wooldridge
  */
-public class ShutdownTest
-{
+public class ShutdownTest {
    @Before
-   public void beforeTest()
-   {
+   public void beforeTest() {
       TestElf.setSlf4jLogLevel(PoolBase.class, Level.DEBUG);
       TestElf.setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
       StubConnection.count.set(0);
    }
 
    @After
-   public void afterTest()
-   {
+   public void afterTest() {
       TestElf.setSlf4jLogLevel(PoolBase.class, Level.WARN);
       TestElf.setSlf4jLogLevel(HikariPool.class, Level.WARN);
       StubConnection.slowCreate = false;
    }
 
    @Test
-   public void testShutdown1() throws SQLException
-   {
+   public void testShutdown1() throws SQLException {
       Assert.assertSame("StubConnection count not as expected", 0, StubConnection.count.get());
 
       StubConnection.slowCreate = true;
@@ -79,14 +73,12 @@ public class ShutdownTest
          for (int i = 0; i < 10; i++) {
             threads[i] = new Thread() {
                @Override
-               public void run()
-               {
+               public void run() {
                   try {
                      if (ds.getConnection() != null) {
                         UtilityElf.quietlySleep(SECONDS.toMillis(1));
                      }
-                  }
-                  catch (SQLException e) {
+                  } catch (SQLException e) {
                   }
                }
             };
@@ -110,8 +102,7 @@ public class ShutdownTest
    }
 
    @Test
-   public void testShutdown2() throws SQLException
-   {
+   public void testShutdown2() throws SQLException {
       assertSame("StubConnection count not as expected", 0, StubConnection.count.get());
 
       StubConnection.slowCreate = true;
@@ -140,8 +131,7 @@ public class ShutdownTest
    }
 
    @Test
-   public void testShutdown3() throws SQLException
-   {
+   public void testShutdown3() throws SQLException {
       assertSame("StubConnection count not as expected", 0, StubConnection.count.get());
 
       StubConnection.slowCreate = false;
@@ -169,8 +159,7 @@ public class ShutdownTest
    }
 
    @Test
-   public void testShutdown4() throws SQLException
-   {
+   public void testShutdown4() throws SQLException {
       StubConnection.slowCreate = true;
 
       HikariConfig config = TestElf.newHikariConfig();
@@ -195,8 +184,7 @@ public class ShutdownTest
    }
 
    @Test
-   public void testShutdown5() throws SQLException
-   {
+   public void testShutdown5() throws SQLException {
       Assert.assertSame("StubConnection count not as expected", 0, StubConnection.count.get());
 
       HikariConfig config = TestElf.newHikariConfig();
@@ -225,8 +213,7 @@ public class ShutdownTest
    }
 
    @Test
-   public void testAfterShutdown() throws Exception
-   {
+   public void testAfterShutdown() throws Exception {
       HikariConfig config = TestElf.newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(5);
@@ -238,16 +225,14 @@ public class ShutdownTest
          ds.close();
          try {
             ds.getConnection();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             Assert.assertTrue(e.getMessage().contains("has been closed."));
          }
       }
    }
 
    @Test
-   public void testShutdownDuringInit() throws Exception
-   {
+   public void testShutdownDuringInit() throws Exception {
       final HikariConfig config = TestElf.newHikariConfig();
       config.setMinimumIdle(5);
       config.setMaximumPoolSize(5);
@@ -264,8 +249,7 @@ public class ShutdownTest
    }
 
    @Test
-   public void testThreadedShutdown() throws Exception
-   {
+   public void testThreadedShutdown() throws Exception {
       final HikariConfig config = TestElf.newHikariConfig();
       config.setMinimumIdle(5);
       config.setMaximumPoolSize(5);
@@ -279,8 +263,7 @@ public class ShutdownTest
          try (final HikariDataSource ds = new HikariDataSource(config)) {
             Thread t = new Thread() {
                @Override
-               public void run()
-               {
+               public void run() {
                   try (Connection connection = ds.getConnection()) {
                      for (int i = 0; i < 10; i++) {
                         Connection connection2 = null;
@@ -289,25 +272,21 @@ public class ShutdownTest
                            PreparedStatement stmt = connection2.prepareStatement("SOMETHING");
                            UtilityElf.quietlySleep(20);
                            stmt.getMaxFieldSize();
-                        }
-                        catch (SQLException e) {
+                        } catch (SQLException e) {
                            try {
                               if (connection2 != null) {
                                  connection2.close();
                               }
-                           }
-                           catch (SQLException e2) {
+                           } catch (SQLException e2) {
                               if (e2.getMessage().contains("shutdown") || e2.getMessage().contains("evicted")) {
                                  break;
                               }
                            }
                         }
                      }
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      Assert.fail(e.getMessage());
-                  }
-                  finally {
+                  } finally {
                      ds.close();
                   }
                }
@@ -316,13 +295,11 @@ public class ShutdownTest
 
             Thread t2 = new Thread() {
                @Override
-               public void run()
-               {
+               public void run() {
                   UtilityElf.quietlySleep(100);
                   try {
                      ds.close();
-                  }
-                  catch (IllegalStateException e) {
+                  } catch (IllegalStateException e) {
                      Assert.fail(e.getMessage());
                   }
                }
@@ -337,8 +314,7 @@ public class ShutdownTest
       }
    }
 
-   private int threadCount()
-   {
+   private int threadCount() {
       Thread[] threads = new Thread[Thread.activeCount() * 2];
       Thread.enumerate(threads);
 

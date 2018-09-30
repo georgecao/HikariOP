@@ -1,14 +1,13 @@
 package org.reploop.hikari.metrics.dropwizard;
 
-import static org.mockito.Mockito.verify;
-
+import com.codahale.metrics.MetricRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.codahale.metrics.MetricRegistry;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CodaHaleMetricsTrackerTest {
@@ -19,7 +18,7 @@ public class CodaHaleMetricsTrackerTest {
    private CodaHaleMetricsTracker testee;
 
    @Before
-   public void setup(){
+   public void setup() {
       testee = new CodaHaleMetricsTracker("mypool", null, mockMetricRegistry);
    }
 

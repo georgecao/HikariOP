@@ -1,11 +1,11 @@
 package org.reploop.hikari.metrics.micrometer;
 
-import org.reploop.hikari.metrics.IMetricsTracker;
-import org.reploop.hikari.metrics.PoolStats;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.reploop.hikari.metrics.IMetricsTracker;
+import org.reploop.hikari.metrics.PoolStats;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,9 +30,10 @@ import java.util.concurrent.TimeUnit;
  *      };
  * </pre></blockquote>
  */
-public class MicrometerMetricsTracker implements IMetricsTracker
-{
-   /** Prefix used for all HikariCP metric names. */
+public class MicrometerMetricsTracker implements IMetricsTracker {
+   /**
+    * Prefix used for all HikariCP metric names.
+    */
    public static final String HIKARI_METRIC_NAME_PREFIX = "hikaricp";
 
    private static final String METRIC_CATEGORY = "pool";
@@ -68,8 +69,7 @@ public class MicrometerMetricsTracker implements IMetricsTracker
    @SuppressWarnings({"FieldCanBeLocal", "unused"})
    private final PoolStats poolStats;
 
-   MicrometerMetricsTracker(final String poolName, final PoolStats poolStats, final MeterRegistry meterRegistry)
-   {
+   MicrometerMetricsTracker(final String poolName, final PoolStats poolStats, final MeterRegistry meterRegistry) {
       this.poolStats = poolStats;
 
       this.connectionObtainTimer = Timer.builder(METRIC_NAME_WAIT)
@@ -124,29 +124,29 @@ public class MicrometerMetricsTracker implements IMetricsTracker
 
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public void recordConnectionAcquiredNanos(final long elapsedAcquiredNanos)
-   {
+   public void recordConnectionAcquiredNanos(final long elapsedAcquiredNanos) {
       connectionObtainTimer.record(elapsedAcquiredNanos, TimeUnit.NANOSECONDS);
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public void recordConnectionUsageMillis(final long elapsedBorrowedMillis)
-   {
+   public void recordConnectionUsageMillis(final long elapsedBorrowedMillis) {
       connectionUsage.record(elapsedBorrowedMillis, TimeUnit.MILLISECONDS);
    }
 
    @Override
-   public void recordConnectionTimeout()
-   {
+   public void recordConnectionTimeout() {
       connectionTimeoutCounter.increment();
    }
 
    @Override
-   public void recordConnectionCreatedMillis(long connectionCreatedMillis)
-   {
+   public void recordConnectionCreatedMillis(long connectionCreatedMillis) {
       connectionCreation.record(connectionCreatedMillis, TimeUnit.MILLISECONDS);
    }
 }

@@ -16,10 +16,10 @@
 
 package org.reploop.hikari.util;
 
-import org.reploop.hikari.pool.TestElf;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.reploop.hikari.pool.TestElf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,11 +40,9 @@ import static org.junit.Assume.assumeTrue;
  * @author Brett Wooldridge
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TomcatConcurrentBagLeakTest
-{
+public class TomcatConcurrentBagLeakTest {
    @Test
-   public void testConcurrentBagForLeaks() throws Exception
-   {
+   public void testConcurrentBagForLeaks() throws Exception {
       assumeTrue(!TestElf.isJava9());
 
       ClassLoader cl = new TestElf.FauxWebClassLoader();
@@ -60,8 +58,7 @@ public class TomcatConcurrentBagLeakTest
    }
 
    @Test
-   public void testConcurrentBagForLeaks2() throws Exception
-   {
+   public void testConcurrentBagForLeaks2() throws Exception {
       assumeTrue(!TestElf.isJava9());
 
       ClassLoader cl = this.getClass().getClassLoader();
@@ -76,41 +73,35 @@ public class TomcatConcurrentBagLeakTest
       assertNotNull(ex);
    }
 
-   public static class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
-   {
+   public static class PoolEntry implements ConcurrentBag.IConcurrentBagEntry {
       private int state;
 
       @Override
-      public boolean compareAndSet(int expectState, int newState)
-      {
+      public boolean compareAndSet(int expectState, int newState) {
          this.state = newState;
          return true;
       }
 
       @Override
-      public void setState(int newState)
-      {
+      public void setState(int newState) {
          this.state = newState;
       }
 
       @Override
-      public int getState()
-      {
+      public int getState() {
          return state;
       }
    }
 
    @SuppressWarnings("unused")
-   public static class FauxWebContext
-   {
+   public static class FauxWebContext {
       private static final Logger log = LoggerFactory.getLogger(FauxWebContext.class);
 
       @SuppressWarnings("WeakerAccess")
       public Exception failureException;
 
       @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
-      public void createConcurrentBag() throws InterruptedException
-      {
+      public void createConcurrentBag() throws InterruptedException {
          try (ConcurrentBag<PoolEntry> bag = new ConcurrentBag<>((x) -> CompletableFuture.completedFuture(Boolean.TRUE))) {
 
             PoolEntry entry = new PoolEntry();
@@ -126,8 +117,7 @@ public class TomcatConcurrentBagLeakTest
          checkThreadLocalsForLeaks();
       }
 
-      private void checkThreadLocalsForLeaks()
-      {
+      private void checkThreadLocalsForLeaks() {
          Thread[] threads = getThreads();
 
          try {
@@ -164,27 +154,24 @@ public class TomcatConcurrentBagLeakTest
                   }
                }
             }
-         }
-         catch (Throwable t) {
+         } catch (Throwable t) {
             log.warn("Failed to check for ThreadLocal references for web application [{}]", getContextName(), t);
             failureException = new Exception();
          }
       }
 
-      private Object getContextName()
-      {
+      private Object getContextName() {
          return this.getClass().getName();
       }
 
       // THE FOLLOWING CODE COPIED FROM APACHE TOMCAT (2017/01/08)
 
       /**
-      * Analyzes the given thread local map object. Also pass in the field that
-      * points to the internal table to save re-calculating it on every
-      * call to this method.
-      */
-      private void checkThreadLocalMapForLeaks(Object map, Field internalTableField) throws IllegalAccessException, NoSuchFieldException
-      {
+       * Analyzes the given thread local map object. Also pass in the field that
+       * points to the internal table to save re-calculating it on every
+       * call to this method.
+       */
+      private void checkThreadLocalMapForLeaks(Object map, Field internalTableField) throws IllegalAccessException, NoSuchFieldException {
          if (map != null) {
             Object[] table = (Object[]) internalTableField.get(map);
             if (table != null) {
@@ -292,10 +279,9 @@ public class TomcatConcurrentBagLeakTest
       }
 
       /*
-      * Get the set of current threads as an array.
-      */
-      private Thread[] getThreads()
-      {
+       * Get the set of current threads as an array.
+       */
+      private Thread[] getThreads() {
          // Get the current thread group
          ThreadGroup tg = Thread.currentThread().getThreadGroup();
          // Find the root thread group
@@ -303,8 +289,7 @@ public class TomcatConcurrentBagLeakTest
             while (tg.getParent() != null) {
                tg = tg.getParent();
             }
-         }
-         catch (SecurityException se) {
+         } catch (SecurityException se) {
             log.warn("Unable to obtain the parent for ThreadGroup [{}]. It will not be possible to check all threads for potential memory leaks", tg.getName(), se);
          }
 
@@ -323,8 +308,7 @@ public class TomcatConcurrentBagLeakTest
          return threads;
       }
 
-      private String getPrettyClassName(Class<?> clazz)
-      {
+      private String getPrettyClassName(Class<?> clazz) {
          String name = clazz.getCanonicalName();
          if (name == null) {
             name = clazz.getName();

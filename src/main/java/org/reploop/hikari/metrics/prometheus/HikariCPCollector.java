@@ -12,13 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.metrics.prometheus;
 
-import org.reploop.hikari.metrics.PoolStats;
 import io.prometheus.client.Collector;
 import io.prometheus.client.GaugeMetricFamily;
+import org.reploop.hikari.metrics.PoolStats;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +57,7 @@ class HikariCPCollector extends Collector {
    }
 
    private GaugeMetricFamily createGauge(String metric, String help,
-      Function<PoolStats, Integer> metricValueFunction) {
+                                         Function<PoolStats, Integer> metricValueFunction) {
       GaugeMetricFamily metricFamily = new GaugeMetricFamily(metric, help, LABEL_NAMES);
       poolStatsMap.forEach((k, v) -> metricFamily.addMetric(
          Collections.singletonList(k),

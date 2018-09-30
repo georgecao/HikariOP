@@ -1,11 +1,11 @@
 package org.reploop.hikari.metrics.micrometer;
 
-import org.reploop.hikari.metrics.PoolStats;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.reploop.hikari.metrics.PoolStats;
 
 public class MicrometerMetricsTrackerTest {
 
@@ -14,7 +14,7 @@ public class MicrometerMetricsTrackerTest {
    private MicrometerMetricsTracker testee;
 
    @Before
-   public void setup(){
+   public void setup() {
       testee = new MicrometerMetricsTracker("mypool", new PoolStats(1000L) {
          @Override
          protected void update() {

@@ -19,23 +19,14 @@ package org.reploop.hikari.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MICROSECONDS;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 /**
- *
  * @author Brett Wooldridge
  */
-public class ClockSourceTest
-{
+public class ClockSourceTest {
    @Test
-   public void testClockSourceDisplay()
-   {
+   public void testClockSourceDisplay() {
       ClockSource msSource = new ClockSource.MillisecondClockSource();
 
       final long sTime = DAYS.toMillis(3) + HOURS.toMillis(9) + MINUTES.toMillis(24) + SECONDS.toMillis(18) + MILLISECONDS.toMillis(572);
@@ -48,7 +39,7 @@ public class ClockSourceTest
       String ds2 = msSource.elapsedDisplayString0(sTime, eTime2);
       Assert.assertEquals("-59m54s795ms", ds2);
 
-      
+
       ClockSource nsSource = new ClockSource.NanosecondClockSource();
 
       final long sTime2 = DAYS.toNanos(3) + HOURS.toNanos(9) + MINUTES.toNanos(24) + SECONDS.toNanos(18) + MILLISECONDS.toNanos(572) + MICROSECONDS.toNanos(324) + NANOSECONDS.toNanos(823);

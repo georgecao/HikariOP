@@ -12,33 +12,27 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.reploop.hikari.pool.TestElf.newHikariDataSource;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.util.UtilityElf;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.junit.Test;
+import static org.junit.Assert.*;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
+import static org.reploop.hikari.pool.TestElf.newHikariDataSource;
 
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.util.UtilityElf;
-
-public class ConnectionStateTest
-{
+public class ConnectionStateTest {
    @Test
-   public void testAutoCommit() throws SQLException
-   {
+   public void testAutoCommit() throws SQLException {
       try (HikariDataSource ds = newHikariDataSource()) {
          ds.setAutoCommit(true);
          ds.setMinimumIdle(1);
@@ -61,8 +55,7 @@ public class ConnectionStateTest
    }
 
    @Test
-   public void testTransactionIsolation() throws SQLException
-   {
+   public void testTransactionIsolation() throws SQLException {
       try (HikariDataSource ds = newHikariDataSource()) {
          ds.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
          ds.setMinimumIdle(1);
@@ -81,8 +74,7 @@ public class ConnectionStateTest
    }
 
    @Test
-   public void testIsolation() throws Exception
-   {
+   public void testIsolation() throws Exception {
       HikariConfig config = newHikariConfig();
       config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
       config.setTransactionIsolation("TRANSACTION_REPEATABLE_READ");
@@ -93,8 +85,7 @@ public class ConnectionStateTest
    }
 
    @Test
-   public void testReadOnly() throws Exception
-   {
+   public void testReadOnly() throws Exception {
       try (HikariDataSource ds = newHikariDataSource()) {
          ds.setCatalog("test");
          ds.setMinimumIdle(1);
@@ -113,8 +104,7 @@ public class ConnectionStateTest
    }
 
    @Test
-   public void testCatalog() throws SQLException
-   {
+   public void testCatalog() throws SQLException {
       try (HikariDataSource ds = newHikariDataSource()) {
          ds.setCatalog("test");
          ds.setMinimumIdle(1);
@@ -133,8 +123,7 @@ public class ConnectionStateTest
    }
 
    @Test
-   public void testCommitTracking() throws SQLException
-   {
+   public void testCommitTracking() throws SQLException {
       try (HikariDataSource ds = newHikariDataSource()) {
          ds.setAutoCommit(false);
          ds.setMinimumIdle(1);

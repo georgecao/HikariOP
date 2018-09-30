@@ -12,33 +12,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.reploop.hikari.pool.TestElf.getPool;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.reploop.hikari.pool.TestElf.getPool;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-
-public class StatementTest
-{
+public class StatementTest {
    private HikariDataSource ds;
 
    @Before
-   public void setup()
-   {
+   public void setup() {
       HikariConfig config = newHikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(2);
@@ -49,14 +46,12 @@ public class StatementTest
    }
 
    @After
-   public void teardown()
-   {
+   public void teardown() {
       ds.close();
    }
 
    @Test
-   public void testStatementClose() throws SQLException
-   {
+   public void testStatementClose() throws SQLException {
       ds.getConnection().close();
 
       HikariPool pool = getPool(ds);
@@ -79,8 +74,7 @@ public class StatementTest
    }
 
    @Test
-   public void testAutoStatementClose() throws SQLException
-   {
+   public void testAutoStatementClose() throws SQLException {
       try (Connection connection = ds.getConnection()) {
          assertNotNull(connection);
 
@@ -115,21 +109,19 @@ public class StatementTest
    }
 
    @Test
-   public void testDoubleStatementClose() throws SQLException
-   {
+   public void testDoubleStatementClose() throws SQLException {
       try (Connection connection = ds.getConnection();
-            Statement statement1 = connection.createStatement()) {
+           Statement statement1 = connection.createStatement()) {
          statement1.close();
          statement1.close();
       }
    }
 
    @Test
-   public void testOutOfOrderStatementClose() throws SQLException
-   {
+   public void testOutOfOrderStatementClose() throws SQLException {
       try (Connection connection = ds.getConnection();
-            Statement statement1 = connection.createStatement();
-            Statement statement2 = connection.createStatement()) {
+           Statement statement1 = connection.createStatement();
+           Statement statement2 = connection.createStatement()) {
          statement1.close();
          statement2.close();
       }

@@ -16,34 +16,26 @@
 
 package org.reploop.hikari.util;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import org.reploop.hikari.HikariConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.reploop.hikari.HikariConfig;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A class that reflectively sets bean properties on a target object.
  *
  * @author Brett Wooldridge
  */
-public final class PropertyElf
-{
+public final class PropertyElf {
    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyElf.class);
 
    private static final Pattern GETTER_PATTERN = Pattern.compile("(get|is)[A-Z].+");
 
-   public static void setTargetFromProperties(final Object target, final Properties properties)
-   {
+   public static void setTargetFromProperties(final Object target, final Properties properties) {
       if (target == null || properties == null) {
          return;
       }
@@ -52,8 +44,7 @@ public final class PropertyElf
       properties.forEach((key, value) -> {
          if (target instanceof HikariConfig && key.toString().startsWith("dataSource.")) {
             ((HikariConfig) target).addDataSourceProperty(key.toString().substring("dataSource.".length()), value);
-         }
-         else {
+         } else {
             setProperty(target, key.toString(), value, methods);
          }
       });
@@ -65,8 +56,7 @@ public final class PropertyElf
     * @param targetClass the target object
     * @return a set of property names
     */
-   public static Set<String> getPropertyNames(final Class<?> targetClass)
-   {
+   public static Set<String> getPropertyNames(final Class<?> targetClass) {
       HashSet<String> set = new HashSet<>();
       Matcher matcher = GETTER_PATTERN.matcher("");
       for (Method method : targetClass.getMethods()) {
@@ -78,8 +68,7 @@ public final class PropertyElf
                   name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
                   set.add(name);
                }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                continue;
             }
          }
@@ -88,35 +77,30 @@ public final class PropertyElf
       return set;
    }
 
-   public static Object getProperty(final String propName, final Object target)
-   {
+   public static Object getProperty(final String propName, final Object target) {
       try {
          // use the english locale to avoid the infamous turkish locale bug
          String capitalized = "get" + propName.substring(0, 1).toUpperCase(Locale.ENGLISH) + propName.substring(1);
          Method method = target.getClass().getMethod(capitalized);
          return method.invoke(target);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          try {
             String capitalized = "is" + propName.substring(0, 1).toUpperCase(Locale.ENGLISH) + propName.substring(1);
             Method method = target.getClass().getMethod(capitalized);
             return method.invoke(target);
-         }
-         catch (Exception e2) {
+         } catch (Exception e2) {
             return null;
          }
       }
    }
 
-   public static Properties copyProperties(final Properties props)
-   {
+   public static Properties copyProperties(final Properties props) {
       Properties copy = new Properties();
       props.forEach((key, value) -> copy.setProperty(key.toString(), value.toString()));
       return copy;
    }
 
-   private static void setProperty(final Object target, final String propName, final Object propValue, final List<Method> methods)
-   {
+   private static void setProperty(final Object target, final String propName, final Object propValue, final List<Method> methods) {
       // use the english locale to avoid the infamous turkish locale bug
       String methodName = "set" + propName.substring(0, 1).toUpperCase(Locale.ENGLISH) + propName.substring(1);
       Method writeMethod = methods.stream().filter(m -> m.getName().equals(methodName) && m.getParameterCount() == 1).findFirst().orElse(null);
@@ -135,28 +119,22 @@ public final class PropertyElf
          Class<?> paramClass = writeMethod.getParameterTypes()[0];
          if (paramClass == int.class) {
             writeMethod.invoke(target, Integer.parseInt(propValue.toString()));
-         }
-         else if (paramClass == long.class) {
+         } else if (paramClass == long.class) {
             writeMethod.invoke(target, Long.parseLong(propValue.toString()));
-         }
-         else if (paramClass == boolean.class || paramClass == Boolean.class) {
+         } else if (paramClass == boolean.class || paramClass == Boolean.class) {
             writeMethod.invoke(target, Boolean.parseBoolean(propValue.toString()));
-         }
-         else if (paramClass == String.class) {
+         } else if (paramClass == String.class) {
             writeMethod.invoke(target, propValue.toString());
-         }
-         else {
+         } else {
             try {
                LOGGER.debug("Try to create a new instance of \"{}\"", propValue.toString());
                writeMethod.invoke(target, Class.forName(propValue.toString()).newInstance());
-            }
-            catch (InstantiationException | ClassNotFoundException e) {
+            } catch (InstantiationException | ClassNotFoundException e) {
                LOGGER.debug("Class \"{}\" not found or could not instantiate it (Default constructor)", propValue.toString());
                writeMethod.invoke(target, propValue);
             }
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          LOGGER.error("Failed to set property {} on target {}", propName, target.getClass(), e);
          throw new RuntimeException(e);
       }

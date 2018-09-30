@@ -12,37 +12,34 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.util.UtilityElf;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.util.UtilityElf;
+import static org.junit.Assert.assertEquals;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 
 /**
  * @author Martin Stříž (striz@raynet.cz)
  */
-public class HouseKeeperCleanupTest
-{
+public class HouseKeeperCleanupTest {
 
    private ScheduledThreadPoolExecutor executor;
 
    @Before
-   public void before() throws Exception
-   {
+   public void before() throws Exception {
       ThreadFactory threadFactory = new UtilityElf.DefaultThreadFactory("global housekeeper", true);
 
       executor = new ScheduledThreadPoolExecutor(1, threadFactory, new ThreadPoolExecutor.DiscardPolicy());
@@ -51,8 +48,7 @@ public class HouseKeeperCleanupTest
    }
 
    @Test
-   public void testHouseKeeperCleanupWithCustomExecutor() throws Exception
-   {
+   public void testHouseKeeperCleanupWithCustomExecutor() throws Exception {
       HikariConfig config = newHikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(10);
@@ -75,8 +71,7 @@ public class HouseKeeperCleanupTest
    }
 
    @After
-   public void after() throws Exception
-   {
+   public void after() throws Exception {
       executor.shutdown();
       executor.awaitTermination(5, TimeUnit.SECONDS);
    }

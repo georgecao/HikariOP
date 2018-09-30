@@ -1,20 +1,18 @@
 package org.reploop.hikari.datasource;
 
+import org.junit.Test;
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
-import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 import static org.junit.Assert.fail;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 
-public class TestSealedConfig
-{
+public class TestSealedConfig {
    @Test(expected = IllegalStateException.class)
-   public void testSealed1() throws SQLException
-   {
+   public void testSealed1() throws SQLException {
       HikariConfig config = newHikariConfig();
       config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
@@ -25,8 +23,7 @@ public class TestSealedConfig
    }
 
    @Test(expected = IllegalStateException.class)
-   public void testSealed2() throws SQLException
-   {
+   public void testSealed2() throws SQLException {
       HikariDataSource ds = new HikariDataSource();
       ds.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
@@ -39,8 +36,7 @@ public class TestSealedConfig
    }
 
    @Test(expected = IllegalStateException.class)
-   public void testSealed3() throws SQLException
-   {
+   public void testSealed3() throws SQLException {
       HikariDataSource ds = new HikariDataSource();
       ds.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 
@@ -53,8 +49,7 @@ public class TestSealedConfig
    }
 
    @Test
-   public void testSealedAccessibleMethods() throws SQLException
-   {
+   public void testSealedAccessibleMethods() throws SQLException {
       HikariConfig config = newHikariConfig();
       config.setDataSourceClassName("org.reploop.hikari.mocks.StubDataSource");
 

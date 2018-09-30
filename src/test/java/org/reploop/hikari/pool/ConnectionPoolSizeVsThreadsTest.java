@@ -12,33 +12,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.pool;
 
-import static org.reploop.hikari.pool.TestElf.getPool;
-import static org.reploop.hikari.pool.TestElf.newHikariConfig;
-import static org.reploop.hikari.util.ClockSource.elapsedMillis;
-import static java.util.concurrent.Executors.newFixedThreadPool;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.mocks.StubDataSource;
+import org.reploop.hikari.util.ClockSource;
+import org.reploop.hikari.util.UtilityElf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.mocks.StubDataSource;
-import org.reploop.hikari.util.ClockSource;
-import org.reploop.hikari.util.UtilityElf;
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.*;
+import static org.reploop.hikari.pool.TestElf.getPool;
+import static org.reploop.hikari.pool.TestElf.newHikariConfig;
 
 /**
  * @author Matthew Tambara (matthew.tambara@liferay.com)
@@ -53,17 +49,17 @@ public class ConnectionPoolSizeVsThreadsTest {
    public void testPoolSizeAboutSameSizeAsThreadCount() throws Exception {
       final int threadCount = 50;
       final Counts counts = testPoolSize(2 /*minIdle*/,
-                                         100 /*maxPoolSize*/,
-                                         threadCount,
-                                         1 /*workTimeMs*/,
-                                         0 /*restTimeMs*/,
-                                         20 /*connectionAcquisitionTimeMs*/,
-                                         ITERATIONS,
-                                         SECONDS.toMillis(2) /*postTestTimeMs*/);
+         100 /*maxPoolSize*/,
+         threadCount,
+         1 /*workTimeMs*/,
+         0 /*restTimeMs*/,
+         20 /*connectionAcquisitionTimeMs*/,
+         ITERATIONS,
+         SECONDS.toMillis(2) /*postTestTimeMs*/);
 
       // maxActive may never make it to threadCount but it shouldn't be any higher
       assertEquals(threadCount, counts.maxActive, 15 /*delta*/);
-      assertEquals(threadCount, counts.maxTotal,  5 /*delta*/);
+      assertEquals(threadCount, counts.maxTotal, 5 /*delta*/);
    }
 
    @Test
@@ -76,13 +72,13 @@ public class ConnectionPoolSizeVsThreadsTest {
       final int workTimeMs = 0;
       final int connectionAcquisitionTimeMs = 250;
       final Counts counts = testPoolSize(2 /*minIdle*/,
-                                         100 /*maxPoolSize*/,
-                                         threadCount,
-                                         workTimeMs,
-                                         0 /*restTimeMs*/,
-                                         connectionAcquisitionTimeMs,
-                                         workItems /*iterations*/,
-                                         SECONDS.toMillis(3) /*postTestTimeMs*/);
+         100 /*maxPoolSize*/,
+         threadCount,
+         workTimeMs,
+         0 /*restTimeMs*/,
+         connectionAcquisitionTimeMs,
+         workItems /*iterations*/,
+         SECONDS.toMillis(3) /*postTestTimeMs*/);
 
       // hard to put exact bounds on how many thread we will use but we can put an upper bound on usage (if there was only one thread)
       final long totalWorkTime = workItems * workTimeMs;
@@ -96,7 +92,7 @@ public class ConnectionPoolSizeVsThreadsTest {
                                final int iterations, final long postTestTimeMs) throws Exception {
 
       LOGGER.info("Starting test (minIdle={}, maxPoolSize={}, threadCount={}, workTimeMs={}, restTimeMs={}, connectionAcquisitionTimeMs={}, iterations={}, postTestTimeMs={})",
-                  minIdle, maxPoolSize, threadCount, workTimeMs, restTimeMs, connectionAcquisitionTimeMs, iterations, postTestTimeMs);
+         minIdle, maxPoolSize, threadCount, workTimeMs, restTimeMs, connectionAcquisitionTimeMs, iterations, postTestTimeMs);
 
       final HikariConfig config = newHikariConfig();
       config.setMinimumIdle(minIdle);
@@ -121,8 +117,7 @@ public class ConnectionPoolSizeVsThreadsTest {
                   UtilityElf.quietlySleep(restTimeMs);
                   try (Connection c2 = ds.getConnection()) {
                      UtilityElf.quietlySleep(workTimeMs);
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      ref.set(e);
                   }
                }

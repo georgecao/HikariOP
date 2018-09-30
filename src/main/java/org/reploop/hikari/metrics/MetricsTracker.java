@@ -22,6 +22,5 @@ package org.reploop.hikari.metrics;
  * @author Brett Wooldridge
  */
 @Deprecated
-public class MetricsTracker implements IMetricsTracker
-{
+public class MetricsTracker implements IMetricsTracker {
 }

@@ -12,19 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 package org.reploop.hikari.metrics.prometheus;
 
-import org.reploop.hikari.metrics.IMetricsTracker;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Summary;
+import org.reploop.hikari.metrics.IMetricsTracker;
 
 import java.util.concurrent.TimeUnit;
 
-class PrometheusMetricsTracker implements IMetricsTracker
-{
+class PrometheusMetricsTracker implements IMetricsTracker {
    private final Counter CONNECTION_TIMEOUT_COUNTER = Counter.build()
       .name("hikaricp_connection_timeout_total")
       .labelNames("pool")
@@ -67,7 +66,7 @@ class PrometheusMetricsTracker implements IMetricsTracker
       this.elapsedCreationSummaryChild = ELAPSED_CREATION_SUMMARY.labels(poolName);
    }
 
-   private void registerMetrics(CollectorRegistry collectorRegistry){
+   private void registerMetrics(CollectorRegistry collectorRegistry) {
       CONNECTION_TIMEOUT_COUNTER.register(collectorRegistry);
       ELAPSED_ACQUIRED_SUMMARY.register(collectorRegistry);
       ELAPSED_BORROWED_SUMMARY.register(collectorRegistry);
@@ -75,26 +74,22 @@ class PrometheusMetricsTracker implements IMetricsTracker
    }
 
    @Override
-   public void recordConnectionAcquiredNanos(long elapsedAcquiredNanos)
-   {
+   public void recordConnectionAcquiredNanos(long elapsedAcquiredNanos) {
       elapsedAcquiredSummaryChild.observe(elapsedAcquiredNanos);
    }
 
    @Override
-   public void recordConnectionUsageMillis(long elapsedBorrowedMillis)
-   {
+   public void recordConnectionUsageMillis(long elapsedBorrowedMillis) {
       elapsedBorrowedSummaryChild.observe(elapsedBorrowedMillis);
    }
 
    @Override
-   public void recordConnectionCreatedMillis(long connectionCreatedMillis)
-   {
+   public void recordConnectionCreatedMillis(long connectionCreatedMillis) {
       elapsedCreationSummaryChild.observe(connectionCreatedMillis);
    }
 
    @Override
-   public void recordConnectionTimeout()
-   {
+   public void recordConnectionTimeout() {
       connectionTimeoutCounterChild.inc();
    }
 }
