@@ -1,23 +1,19 @@
 package org.reploop.hikari.pool;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.util.PropertyElf;
+
+import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.sql.DataSource;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.util.PropertyElf;
-
-public class TestPropertySetter
-{
+public class TestPropertySetter {
    @Test
-   public void testProperty1() throws Exception
-   {
+   public void testProperty1() throws Exception {
       Properties propfile1 = new Properties();
       propfile1.load(TestPropertySetter.class.getResourceAsStream("/propfile1.properties"));
       HikariConfig config = new HikariConfig(propfile1);
@@ -28,8 +24,7 @@ public class TestPropertySetter
    }
 
    @Test
-   public void testProperty2() throws Exception
-   {
+   public void testProperty2() throws Exception {
       Properties propfile2 = new Properties();
       propfile2.load(TestPropertySetter.class.getResourceAsStream("/propfile2.properties"));
       HikariConfig config = new HikariConfig(propfile2);
@@ -41,8 +36,7 @@ public class TestPropertySetter
    }
 
    @Test
-   public void testObjectProperty() throws Exception
-   {
+   public void testObjectProperty() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
       PrintWriter writer = new PrintWriter(new ByteArrayOutputStream());
@@ -56,8 +50,7 @@ public class TestPropertySetter
    }
 
    @Test
-   public void testPropertyUpperCase() throws Exception
-   {
+   public void testPropertyUpperCase() throws Exception {
       Properties propfile3 = new Properties();
       propfile3.load(TestPropertySetter.class.getResourceAsStream("/propfile3.properties"));
       HikariConfig config = new HikariConfig(propfile3);
@@ -69,22 +62,19 @@ public class TestPropertySetter
    }
 
    @Test
-   public void testGetPropertyNames() throws Exception
-   {
+   public void testGetPropertyNames() throws Exception {
       Set<String> propertyNames = PropertyElf.getPropertyNames(HikariConfig.class);
       Assert.assertTrue(propertyNames.contains("dataSourceClassName"));
    }
 
    @Test
-   public void testSetNonExistantPropertyName() throws Exception
-   {
+   public void testSetNonExistantPropertyName() throws Exception {
       try {
          Properties props = new Properties();
          props.put("what", "happened");
          PropertyElf.setTargetFromProperties(new HikariConfig(), props);
          Assert.fail();
-      }
-      catch (RuntimeException e) {
+      } catch (RuntimeException e) {
       }
    }
 }

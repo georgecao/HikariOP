@@ -3,29 +3,27 @@
  */
 package org.reploop.hikari.pool;
 
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.mocks.MockDataSource;
 import org.reploop.hikari.util.ClockSource;
 import org.reploop.hikari.util.UtilityElf;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
+
 /**
  * Test for cases when db network connectivity goes down and close is called on existing connections. By default Hikari
  * blocks longer than getMaximumTimeout (it can hang for a lot of time depending on driver timeout settings). Closing
  * async the connections fixes this issue.
- *
  */
 public class TestConnectionCloseBlocking {
    private static volatile boolean shouldFail = false;

@@ -1,24 +1,21 @@
 package org.reploop.hikari.pool;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.mocks.StubConnection;
+import org.reploop.hikari.mocks.StubStatement;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.mocks.StubConnection;
-import org.reploop.hikari.mocks.StubStatement;
-
-public class TestProxies
-{
+public class TestProxies {
    @Test
-   public void testProxyCreation() throws SQLException
-   {
+   public void testProxyCreation() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -47,16 +44,14 @@ public class TestProxies
          try {
             conn.unwrap(TestProxies.class);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testStatementProxy() throws SQLException
-   {
+   public void testStatementProxy() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -77,16 +72,14 @@ public class TestProxies
          try {
             stmt.unwrap(TestProxies.class);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testStatementExceptions() throws SQLException
-   {
+   public void testStatementExceptions() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -102,104 +95,91 @@ public class TestProxies
          try {
             conn.createStatement();
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.createStatement(0, 0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.createStatement(0, 0, 0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("");
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("", 0, 0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareCall("", 0, 0, 0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("");
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", new int[0]);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", new String[0]);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0, 0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.prepareStatement("", 0, 0, 0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
       }
    }
 
    @Test
-   public void testOtherExceptions() throws SQLException
-   {
+   public void testOtherExceptions() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -214,87 +194,76 @@ public class TestProxies
          try {
             conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.isReadOnly();
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.setReadOnly(false);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.setCatalog("");
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.setAutoCommit(false);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.clearWarnings();
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.isValid(0);
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.isWrapperFor(getClass());
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.unwrap(getClass());
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             conn.close();
             Assert.fail();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             // pass
          }
 
          try {
             Assert.assertFalse(conn.isValid(0));
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             Assert.fail();
          }
       }

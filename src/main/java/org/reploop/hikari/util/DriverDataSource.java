@@ -15,31 +15,24 @@
  */
 package org.reploop.hikari.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.DataSource;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
+import java.sql.*;
 import java.util.Enumeration;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import javax.sql.DataSource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class DriverDataSource implements DataSource
-{
+public final class DriverDataSource implements DataSource {
    private static final Logger LOGGER = LoggerFactory.getLogger(DriverDataSource.class);
 
    private final String jdbcUrl;
    private final Properties driverProperties;
    private Driver driver;
 
-   public DriverDataSource(String jdbcUrl, String driverClassName, Properties properties, String username, String password)
-   {
+   public DriverDataSource(String jdbcUrl, String driverClassName, Properties properties, String username, String password) {
       this.jdbcUrl = jdbcUrl;
       this.driverProperties = new Properties();
 
@@ -69,8 +62,7 @@ public final class DriverDataSource implements DataSource
             try {
                Class<?> driverClass = this.getClass().getClassLoader().loadClass(driverClassName);
                driver = (Driver) driverClass.newInstance();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                LOGGER.warn("Failed to create instance of driver class {}, trying jdbcUrl resolution", driverClassName, e);
             }
          }
@@ -79,67 +71,56 @@ public final class DriverDataSource implements DataSource
       try {
          if (driver == null) {
             driver = DriverManager.getDriver(jdbcUrl);
-         }
-         else if (!driver.acceptsURL(jdbcUrl)) {
+         } else if (!driver.acceptsURL(jdbcUrl)) {
             throw new RuntimeException("Driver " + driverClassName + " claims to not accept jdbcUrl, " + jdbcUrl);
          }
-      }
-      catch (SQLException e) {
+      } catch (SQLException e) {
          throw new RuntimeException("Failed to get driver instance for jdbcUrl=" + jdbcUrl, e);
       }
    }
 
    @Override
-   public Connection getConnection() throws SQLException
-   {
+   public Connection getConnection() throws SQLException {
       return driver.connect(jdbcUrl, driverProperties);
    }
 
    @Override
-   public Connection getConnection(String username, String password) throws SQLException
-   {
+   public Connection getConnection(String username, String password) throws SQLException {
       return getConnection();
    }
 
    @Override
-   public PrintWriter getLogWriter() throws SQLException
-   {
+   public PrintWriter getLogWriter() throws SQLException {
       throw new SQLFeatureNotSupportedException();
    }
 
    @Override
-   public void setLogWriter(PrintWriter logWriter) throws SQLException
-   {
+   public void setLogWriter(PrintWriter logWriter) throws SQLException {
       throw new SQLFeatureNotSupportedException();
    }
 
    @Override
-   public void setLoginTimeout(int seconds) throws SQLException
-   {
+   public void setLoginTimeout(int seconds) throws SQLException {
       DriverManager.setLoginTimeout(seconds);
    }
 
    @Override
-   public int getLoginTimeout() throws SQLException
-   {
+   public int getLoginTimeout() throws SQLException {
       return DriverManager.getLoginTimeout();
    }
 
    @Override
-   public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException
-   {
+   public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
       return driver.getParentLogger();
    }
 
    @Override
-   public <T> T unwrap(Class<T> iface) throws SQLException
-   {
+   public <T> T unwrap(Class<T> iface) throws SQLException {
       throw new SQLFeatureNotSupportedException();
    }
 
    @Override
-   public boolean isWrapperFor(Class<?> iface) throws SQLException
-   {
+   public boolean isWrapperFor(Class<?> iface) throws SQLException {
       return false;
    }
 }

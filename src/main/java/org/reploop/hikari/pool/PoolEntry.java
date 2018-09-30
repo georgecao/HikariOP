@@ -15,6 +15,12 @@
  */
 package org.reploop.hikari.pool;
 
+import org.reploop.hikari.util.ClockSource;
+import org.reploop.hikari.util.ConcurrentBag;
+import org.reploop.hikari.util.FastList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -22,20 +28,12 @@ import java.util.Comparator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.reploop.hikari.util.ClockSource;
-import org.reploop.hikari.util.FastList;
-import org.reploop.hikari.util.ConcurrentBag;
-
 /**
  * Entry used in the ConcurrentBag to track Connection instances.
  *
  * @author Brett Wooldridge
  */
-final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
-{
+final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry {
    private static final Logger LOGGER = LoggerFactory.getLogger(PoolEntry.class);
 
    static final Comparator<PoolEntry> LASTACCESS_COMPARABLE;
@@ -54,8 +52,7 @@ final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
    private final boolean isReadOnly;
    private final boolean isAutoCommit;
 
-   static
-   {
+   static {
       LASTACCESS_COMPARABLE = new Comparator<PoolEntry>() {
          @Override
          public int compare(final PoolEntry entryOne, final PoolEntry entryTwo) {
@@ -64,8 +61,7 @@ final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
       };
    }
 
-   PoolEntry(final Connection connection, final PoolBase pool, final boolean isReadOnly, final boolean isAutoCommit)
-   {
+   PoolEntry(final Connection connection, final PoolBase pool, final boolean isReadOnly, final boolean isAutoCommit) {
       this.connection = connection;
       this.hikariPool = (HikariPool) pool;
       this.isReadOnly = isReadOnly;
@@ -80,8 +76,7 @@ final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
     *
     * @param lastAccessed last access time-stamp
     */
-   void recycle(final long lastAccessed)
-   {
+   void recycle(final long lastAccessed) {
       this.lastAccessed = lastAccessed;
       hikariPool.releaseConnection(this);
    }
@@ -89,51 +84,46 @@ final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
    /**
     * @param endOfLife
     */
-   void setFutureEol(final ScheduledFuture<?> endOfLife)
-   {
+   void setFutureEol(final ScheduledFuture<?> endOfLife) {
       this.endOfLife = endOfLife;
    }
 
-   Connection createProxyConnection(final ProxyLeakTask leakTask, final long now)
-   {
+   Connection createProxyConnection(final ProxyLeakTask leakTask, final long now) {
       return ProxyFactory.getProxyConnection(this, connection, openStatements, leakTask, now, isReadOnly, isAutoCommit);
    }
 
-   void resetConnectionState(final ProxyConnection proxyConnection, final int dirtyBits) throws SQLException
-   {
+   void resetConnectionState(final ProxyConnection proxyConnection, final int dirtyBits) throws SQLException {
       hikariPool.resetConnectionState(connection, proxyConnection, dirtyBits);
    }
 
-   String getPoolName()
-   {
+   String getPoolName() {
       return hikariPool.toString();
    }
 
-   boolean isMarkedEvicted()
-   {
+   boolean isMarkedEvicted() {
       return evict;
    }
 
-   void markEvicted()
-   {
+   void markEvicted() {
       this.evict = true;
    }
 
-   void evict(final String closureReason)
-   {
+   void evict(final String closureReason) {
       hikariPool.closeConnection(this, closureReason);
    }
 
-   /** Returns millis since lastBorrowed */
-   long getMillisSinceBorrowed()
-   {
+   /**
+    * Returns millis since lastBorrowed
+    */
+   long getMillisSinceBorrowed() {
       return ClockSource.INSTANCE.elapsedMillis(lastBorrowed);
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public String toString()
-   {
+   public String toString() {
       final long now = ClockSource.INSTANCE.currentTime();
       return connection
          + ", accessed " + ClockSource.INSTANCE.elapsedDisplayString(lastAccessed, now) + " ago, "
@@ -144,29 +134,31 @@ final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
    //                      IConcurrentBagEntry methods
    // ***********************************************************************
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public int getState()
-   {
+   public int getState() {
       return state.get();
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public boolean compareAndSet(int expect, int update)
-   {
+   public boolean compareAndSet(int expect, int update) {
       return state.compareAndSet(expect, update);
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    @Override
-   public void lazySet(int update)
-   {
+   public void lazySet(int update) {
       state.lazySet(update);
    }
 
-   Connection close()
-   {
+   Connection close() {
       ScheduledFuture<?> eol = endOfLife;
       if (eol != null && !eol.isDone() && !eol.cancel(false)) {
          LOGGER.warn("{} - maxLifeTime expiration task cancellation unexpectedly returned false for connection {}", getPoolName(), connection);
@@ -178,19 +170,18 @@ final class PoolEntry implements ConcurrentBag.IConcurrentBagEntry
       return con;
    }
 
-   private String stateToString()
-   {
+   private String stateToString() {
       switch (state.get()) {
-      case STATE_IN_USE:
-         return "IN_USE";
-      case STATE_NOT_IN_USE:
-         return "NOT_IN_USE";
-      case STATE_REMOVED:
-         return "REMOVED";
-      case STATE_RESERVED:
-         return "RESERVED";
-      default:
-         return "Invalid";
+         case STATE_IN_USE:
+            return "IN_USE";
+         case STATE_NOT_IN_USE:
+            return "NOT_IN_USE";
+         case STATE_REMOVED:
+            return "REMOVED";
+         case STATE_RESERVED:
+            return "RESERVED";
+         default:
+            return "Invalid";
       }
    }
 }

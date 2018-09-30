@@ -1,18 +1,15 @@
 package org.reploop.hikari.pool;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.reploop.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import org.reploop.hikari.HikariDataSource;
-
-public class IsolationTest
-{
+public class IsolationTest {
    @Test
-   public void testIsolation() throws SQLException
-   {
+   public void testIsolation() throws SQLException {
       try (HikariDataSource ds = new HikariDataSource()) {
          ds.setMinimumIdle(1);
          ds.setMaximumPoolSize(1);
@@ -31,8 +28,7 @@ public class IsolationTest
    }
 
    @Test
-   public void testNonIsolation() throws SQLException
-   {
+   public void testNonIsolation() throws SQLException {
       try (HikariDataSource ds = new HikariDataSource()) {
          ds.setMinimumIdle(1);
          ds.setMaximumPoolSize(1);

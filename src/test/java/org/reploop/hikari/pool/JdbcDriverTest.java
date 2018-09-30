@@ -15,32 +15,28 @@
  */
 package org.reploop.hikari.pool;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.util.DriverDataSource;
 
-public class JdbcDriverTest
-{
+import java.sql.Connection;
+import java.sql.SQLException;
+
+public class JdbcDriverTest {
    private HikariDataSource ds;
 
    @After
-   public void teardown()
-   {
+   public void teardown() {
       if (ds != null) {
          ds.close();
       }
    }
 
    @Test
-   public void driverTest1() throws SQLException
-   {
+   public void driverTest1() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(1);
@@ -62,8 +58,7 @@ public class JdbcDriverTest
    }
 
    @Test
-   public void driverTest2() throws SQLException
-   {
+   public void driverTest2() throws SQLException {
       HikariConfig config = new HikariConfig();
 
       config.setMinimumIdle(1);
@@ -74,8 +69,7 @@ public class JdbcDriverTest
 
       try {
          ds = new HikariDataSource(config);
-      }
-      catch (RuntimeException e) {
+      } catch (RuntimeException e) {
          Assert.assertTrue(e.getMessage().contains("claims to not accept"));
       }
    }

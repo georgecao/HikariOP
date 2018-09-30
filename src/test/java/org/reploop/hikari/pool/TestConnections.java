@@ -16,20 +16,11 @@
 
 package org.reploop.hikari.pool;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.apache.logging.log4j.Level;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.mocks.StubConnection;
@@ -37,30 +28,30 @@ import org.reploop.hikari.mocks.StubDataSource;
 import org.reploop.hikari.mocks.StubStatement;
 import org.reploop.hikari.util.UtilityElf;
 
+import java.sql.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * @author Brett Wooldridge
  */
-public class TestConnections
-{
+public class TestConnections {
    @Before
-   public void before()
-   {
+   public void before() {
       TestElf.setSlf4jTargetStream(HikariPool.class, System.err);
       TestElf.setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
       TestElf.setSlf4jLogLevel(PoolBase.class, Level.DEBUG);
    }
 
    @After
-   public void after()
-   {
+   public void after() {
       System.getProperties().remove("com.zaxxer.hikari.housekeeping.periodMs");
       TestElf.setSlf4jLogLevel(HikariPool.class, Level.WARN);
       TestElf.setSlf4jLogLevel(PoolBase.class, Level.WARN);
    }
 
    @Test
-   public void testCreate() throws SQLException
-   {
+   public void testCreate() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(1);
@@ -106,8 +97,7 @@ public class TestConnections
    }
 
    @Test
-   public void testMaxLifetime() throws Exception
-   {
+   public void testMaxLifetime() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -155,15 +145,13 @@ public class TestConnections
 
          Assert.assertSame("Post total connections not as expected", 1, pool.getTotalConnections());
          Assert.assertSame("Post idle connections not as expected", 1, pool.getIdleConnections());
-      }
-      finally {
+      } finally {
          TestElf.setConfigUnitTest(false);
       }
    }
 
    @Test
-   public void testMaxLifetime2() throws Exception
-   {
+   public void testMaxLifetime2() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -207,15 +195,13 @@ public class TestConnections
 
          Assert.assertSame("Post total connections not as expected", 1, pool.getTotalConnections());
          Assert.assertSame("Post idle connections not as expected", 1, pool.getIdleConnections());
-      }
-      finally {
+      } finally {
          TestElf.setConfigUnitTest(false);
       }
    }
 
    @Test
-   public void testDoubleClose() throws Exception
-   {
+   public void testDoubleClose() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(1);
@@ -239,8 +225,7 @@ public class TestConnections
    }
 
    @Test
-   public void testEviction() throws Exception
-   {
+   public void testEviction() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(5);
@@ -259,8 +244,7 @@ public class TestConnections
    }
 
    @Test
-   public void testBackfill() throws Exception
-   {
+   public void testBackfill() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(4);
@@ -271,8 +255,8 @@ public class TestConnections
 
       try (HikariDataSource ds = new HikariDataSource(config)) {
 
-          HikariPool pool = TestElf.getPool(ds);
-    	  UtilityElf.quietlySleep(500);
+         HikariPool pool = TestElf.getPool(ds);
+         UtilityElf.quietlySleep(500);
 
          Assert.assertSame("Total connections not as expected", 1, pool.getTotalConnections());
          Assert.assertSame("Idle connections not as expected", 1, pool.getIdleConnections());
@@ -293,8 +277,7 @@ public class TestConnections
          try {
             statement.getMaxFieldSize();
             Assert.fail();
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             Assert.assertSame(SQLException.class, e.getClass());
          }
 
@@ -320,8 +303,7 @@ public class TestConnections
    }
 
    @Test
-   public void testMaximumPoolLimit() throws Exception
-   {
+   public void testMaximumPoolLimit() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(4);
@@ -342,16 +324,14 @@ public class TestConnections
          for (int i = 0; i < threads.length; i++) {
             threads[i] = new Thread(new Runnable() {
                @Override
-               public void run()
-               {
+               public void run() {
                   try {
                      pool.logPoolState("Before acquire ");
                      Connection connection = ds.getConnection();
                      pool.logPoolState("After  acquire ");
                      UtilityElf.quietlySleep(500);
                      connection.close();
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      ref.set(e);
                   }
                }
@@ -368,13 +348,12 @@ public class TestConnections
 
          pool.logPoolState("before check ");
          Assert.assertNull((ref.get() != null ? ref.get().toString() : ""), ref.get());
-         Assert.assertSame("StubConnection count not as expected", 4+1, StubConnection.count.get()); // 1st connection is in pool.initializeConnections()
+         Assert.assertSame("StubConnection count not as expected", 4 + 1, StubConnection.count.get()); // 1st connection is in pool.initializeConnections()
       }
    }
 
    @Test
-   public void testOldDriver() throws Exception
-   {
+   public void testOldDriver() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(1);
       config.setMaximumPoolSize(1);
@@ -392,16 +371,14 @@ public class TestConnections
 
          UtilityElf.quietlySleep(500);
          connection = ds.getConnection();
-      }
-      finally {
+      } finally {
          StubConnection.oldDriver = false;
          StubStatement.oldDriver = false;
       }
    }
 
    @Test
-   public void testSuspendResume() throws Exception
-   {
+   public void testSuspendResume() throws Exception {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(3);
       config.setMaximumPoolSize(3);
@@ -418,13 +395,11 @@ public class TestConnections
 
          Thread t = new Thread(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                try {
                   ds.getConnection();
                   ds.getConnection();
-               }
-               catch (Exception e) {
+               } catch (Exception e) {
                   Assert.fail();
                }
             }
@@ -447,8 +422,7 @@ public class TestConnections
    }
 
    @Test
-   public void testInitializationFailure() throws SQLException
-   {
+   public void testInitializationFailure() throws SQLException {
       StubDataSource stubDataSource = new StubDataSource();
       stubDataSource.setThrowException(new SQLException("Connection refused"));
 
@@ -462,21 +436,18 @@ public class TestConnections
 
          try (Connection c = ds.getConnection()) {
             Assert.fail("Initialization should have failed");
-         }
-         catch (HikariPool.PoolInitializationException e) {
+         } catch (HikariPool.PoolInitializationException e) {
             // passed
          }
       }
    }
 
    @Test
-   public void testInvalidConnectionTestQuery()
-   {
+   public void testInvalidConnectionTestQuery() {
       class BadConnection extends StubConnection {
          /** {@inheritDoc} */
          @Override
-         public Statement createStatement() throws SQLException
-         {
+         public Statement createStatement() throws SQLException {
             throw new SQLException("Bad query or something.");
          }
       }
@@ -484,8 +455,7 @@ public class TestConnections
       StubDataSource stubDataSource = new StubDataSource() {
          /** {@inheritDoc} */
          @Override
-         public Connection getConnection() throws SQLException
-         {
+         public Connection getConnection() throws SQLException {
             return new BadConnection();
          }
       };
@@ -500,8 +470,7 @@ public class TestConnections
 
       try (HikariDataSource ds = new HikariDataSource(config); Connection c = ds.getConnection()) {
          Assert.fail("getConnection() should have failed");
-      }
-      catch (SQLException e) {
+      } catch (SQLException e) {
          Assert.assertSame("Bad query or something.", e.getNextException().getMessage());
       }
    }

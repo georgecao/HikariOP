@@ -21,8 +21,7 @@ package org.reploop.hikari;
  *
  * @author Brett Wooldridge
  */
-public interface HikariPoolMXBean 
-{
+public interface HikariPoolMXBean {
    int getIdleConnections();
 
    int getActiveConnections();

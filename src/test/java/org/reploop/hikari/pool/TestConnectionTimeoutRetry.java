@@ -1,5 +1,16 @@
 package org.reploop.hikari.pool;
 
+import org.apache.logging.log4j.Level;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.reploop.hikari.HikariConfig;
+import org.reploop.hikari.HikariDataSource;
+import org.reploop.hikari.mocks.StubConnection;
+import org.reploop.hikari.mocks.StubDataSource;
+import org.reploop.hikari.util.ClockSource;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.sql.Connection;
@@ -8,23 +19,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.Level;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import org.reploop.hikari.HikariConfig;
-import org.reploop.hikari.HikariDataSource;
-import org.reploop.hikari.mocks.StubConnection;
-import org.reploop.hikari.mocks.StubDataSource;
-import org.reploop.hikari.util.ClockSource;
-
-public class TestConnectionTimeoutRetry
-{
+public class TestConnectionTimeoutRetry {
    @Test
-   public void testConnectionRetries() throws SQLException
-   {
+   public void testConnectionRetries() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -41,8 +38,7 @@ public class TestConnectionTimeoutRetry
          try (Connection connection = ds.getConnection()) {
             connection.close();
             Assert.fail("Should not have been able to get a connection.");
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             long elapsed = ClockSource.INSTANCE.elapsedMillis(start);
             long timeout = config.getConnectionTimeout();
             Assert.assertTrue("Didn't wait long enough for timeout", (elapsed >= timeout));
@@ -51,8 +47,7 @@ public class TestConnectionTimeoutRetry
    }
 
    @Test
-   public void testConnectionRetries2() throws SQLException
-   {
+   public void testConnectionRetries2() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -69,8 +64,7 @@ public class TestConnectionTimeoutRetry
          ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
          scheduler.schedule(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                stubDataSource.setThrowException(null);
             }
          }, 300, TimeUnit.MILLISECONDS);
@@ -83,19 +77,16 @@ public class TestConnectionTimeoutRetry
             long elapsed = ClockSource.INSTANCE.elapsedMillis(start);
             Assert.assertTrue("Connection returned too quickly, something is wrong.", elapsed > 250);
             Assert.assertTrue("Waited too long to get a connection.", elapsed < config.getConnectionTimeout());
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             Assert.fail("Should not have timed out: " + e.getMessage());
-         }
-         finally {
+         } finally {
             scheduler.shutdownNow();
          }
       }
    }
 
    @Test
-   public void testConnectionRetries3() throws SQLException
-   {
+   public void testConnectionRetries3() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(2);
@@ -113,12 +104,10 @@ public class TestConnectionTimeoutRetry
          ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
          scheduler.schedule(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                try {
                   connection1.close();
-               }
-               catch (Exception e) {
+               } catch (Exception e) {
                   e.printStackTrace(System.err);
                }
             }
@@ -131,19 +120,16 @@ public class TestConnectionTimeoutRetry
 
             long elapsed = ClockSource.INSTANCE.elapsedMillis(start);
             Assert.assertTrue("Waited too long to get a connection.", (elapsed >= 700) && (elapsed < 950));
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             Assert.fail("Should not have timed out.");
-         }
-         finally {
+         } finally {
             scheduler.shutdownNow();
          }
       }
    }
 
    @Test
-   public void testConnectionRetries4() throws SQLException
-   {
+   public void testConnectionRetries4() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(1);
@@ -161,8 +147,7 @@ public class TestConnectionTimeoutRetry
             Connection connection = ds.getConnection();
             connection.close();
             Assert.fail("Should not have been able to get a connection.");
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             long elapsed = ClockSource.INSTANCE.elapsedMillis(start);
             Assert.assertTrue("Didn't wait long enough for timeout", (elapsed >= config.getConnectionTimeout()));
          }
@@ -170,8 +155,7 @@ public class TestConnectionTimeoutRetry
    }
 
    @Test
-   public void testConnectionRetries5() throws SQLException
-   {
+   public void testConnectionRetries5() throws SQLException {
       HikariConfig config = new HikariConfig();
       config.setMinimumIdle(0);
       config.setMaximumPoolSize(2);
@@ -188,12 +172,10 @@ public class TestConnectionTimeoutRetry
          ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
          scheduler.schedule(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                try {
                   connection1.close();
-               }
-               catch (Exception e) {
+               } catch (Exception e) {
                   e.printStackTrace(System.err);
                }
             }
@@ -208,19 +190,16 @@ public class TestConnectionTimeoutRetry
 
             long elapsed = ClockSource.INSTANCE.elapsedMillis(start);
             Assert.assertTrue("Waited too long to get a connection.", (elapsed >= 250) && (elapsed < config.getConnectionTimeout()));
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             Assert.fail("Should not have timed out.");
-         }
-         finally {
+         } finally {
             scheduler.shutdownNow();
          }
       }
    }
 
    @Test
-   public void testConnectionIdleFill() throws Exception
-   {
+   public void testConnectionIdleFill() throws Exception {
       StubConnection.slowCreate = false;
 
       HikariConfig config = new HikariConfig();
@@ -268,14 +247,12 @@ public class TestConnectionTimeoutRetry
    }
 
    @Before
-   public void before()
-   {
+   public void before() {
       TestElf.setSlf4jLogLevel(HikariPool.class, Level.INFO);
    }
 
    @After
-   public void after()
-   {
+   public void after() {
       System.getProperties().remove("com.zaxxer.hikari.housekeeping.periodMs");
    }
 }

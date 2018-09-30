@@ -15,25 +15,18 @@
  */
 package org.reploop.hikari.pool;
 
-import javax.naming.Context;
-import javax.naming.Name;
-import javax.naming.NamingException;
-import javax.naming.RefAddr;
-import javax.naming.Reference;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.osjava.sj.jndi.AbstractContext;
-
 import org.reploop.hikari.HikariDataSource;
 import org.reploop.hikari.HikariJNDIFactory;
 import org.reploop.hikari.mocks.StubDataSource;
 
-public class TestJNDI
-{
+import javax.naming.*;
+
+public class TestJNDI {
    @Test
-   public void testJndiLookup1() throws Exception
-   {
+   public void testJndiLookup1() throws Exception {
       HikariJNDIFactory jndi = new HikariJNDIFactory();
       Reference ref = new Reference("javax.sql.DataSource");
       ref.add(new BogusRef("driverClassName", "com.zaxxer.hikari.mocks.StubDriver"));
@@ -53,8 +46,7 @@ public class TestJNDI
    }
 
    @Test
-   public void testJndiLookup2() throws Exception
-   {
+   public void testJndiLookup2() throws Exception {
       HikariJNDIFactory jndi = new HikariJNDIFactory();
       Reference ref = new Reference("javax.sql.DataSource");
       ref.add(new BogusRef("dataSourceJNDI", "java:comp/env/HikariDS"));
@@ -75,8 +67,7 @@ public class TestJNDI
    }
 
    @Test
-   public void testJndiLookup3() throws Exception
-   {
+   public void testJndiLookup3() throws Exception {
       HikariJNDIFactory jndi = new HikariJNDIFactory();
 
       Reference ref = new Reference("javax.sql.DataSource");
@@ -84,58 +75,49 @@ public class TestJNDI
       try {
          jndi.getObjectInstance(ref, null, null, null);
          Assert.fail();
-      }
-      catch (RuntimeException e) {
+      } catch (RuntimeException e) {
          Assert.assertTrue(e.getMessage().contains("JNDI context does not found"));
       }
    }
 
    @SuppressWarnings("unchecked")
-   private class BogusContext extends AbstractContext
-   {
+   private class BogusContext extends AbstractContext {
       @Override
-      public Context createSubcontext(Name name) throws NamingException
-      {
+      public Context createSubcontext(Name name) throws NamingException {
          return null;
       }
 
       @Override
-      public Object lookup(String name) throws NamingException
-      {
+      public Object lookup(String name) throws NamingException {
          return new HikariDataSource();
       }
    }
 
    @SuppressWarnings("unchecked")
-   private class BogusContext2 extends AbstractContext
-   {
+   private class BogusContext2 extends AbstractContext {
       @Override
-      public Context createSubcontext(Name name) throws NamingException
-      {
+      public Context createSubcontext(Name name) throws NamingException {
          return null;
       }
 
       @Override
-      public Object lookup(String name) throws NamingException
-      {
+      public Object lookup(String name) throws NamingException {
          return new StubDataSource();
       }
    }
 
-   private class BogusRef extends RefAddr
-   {
+   private class BogusRef extends RefAddr {
       private static final long serialVersionUID = 1L;
 
       private String content;
-      BogusRef(String type, String content)
-      {
+
+      BogusRef(String type, String content) {
          super(type);
          this.content = content;
       }
 
       @Override
-      public Object getContent()
-      {
+      public Object getContent() {
          return content;
       }
    }

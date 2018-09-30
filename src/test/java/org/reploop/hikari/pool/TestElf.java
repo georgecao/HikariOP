@@ -16,11 +16,6 @@
 
 package org.reploop.hikari.pool;
 
-import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.util.HashMap;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LogEvent;
@@ -28,73 +23,67 @@ import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.layout.CsvLogEventLayout;
 import org.apache.logging.slf4j.Log4jLogger;
-import org.slf4j.LoggerFactory;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
+import org.slf4j.LoggerFactory;
+
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.util.HashMap;
 
 /**
  * Utility methods for testing.
  *
  * @author Brett Wooldridge
  */
-public final class TestElf
-{
+public final class TestElf {
    private TestElf() {
       // default constructor
    }
 
-   public static HikariPool getPool(HikariDataSource ds)
-   {
+   public static HikariPool getPool(HikariDataSource ds) {
       try {
          Field field = ds.getClass().getDeclaredField("pool");
          field.setAccessible(true);
          return (HikariPool) field.get(ds);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
    @SuppressWarnings("unchecked")
-   public static HashMap<Object, HikariPool> getMultiPool(HikariDataSource ds)
-   {
+   public static HashMap<Object, HikariPool> getMultiPool(HikariDataSource ds) {
       try {
          Field field = ds.getClass().getDeclaredField("multiPool");
          field.setAccessible(true);
          return (HashMap<Object, HikariPool>) field.get(ds);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   public static boolean getConnectionCommitDirtyState(Connection connection)
-   {
+   public static boolean getConnectionCommitDirtyState(Connection connection) {
       try {
          Field field = ProxyConnection.class.getDeclaredField("isCommitStateDirty");
          field.setAccessible(true);
          return field.getBoolean(connection);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   public static void setConfigUnitTest(boolean unitTest)
-   {
+   public static void setConfigUnitTest(boolean unitTest) {
       try {
          Field field = HikariConfig.class.getDeclaredField("unitTest");
          field.setAccessible(true);
          field.setBoolean(null, unitTest);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   public static void setSlf4jTargetStream(Class<?> clazz, PrintStream stream)
-   {
+   public static void setSlf4jTargetStream(Class<?> clazz, PrintStream stream) {
       try {
          Log4jLogger log4Jlogger = (Log4jLogger) LoggerFactory.getLogger(clazz);
 
@@ -108,14 +97,12 @@ public final class TestElf
          }
 
          logger.addAppender(new StringAppender("string", stream));
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   public static void setSlf4jLogLevel(Class<?> clazz, Level logLevel)
-   {
+   public static void setSlf4jLogLevel(Class<?> clazz, Level logLevel) {
       try {
          Log4jLogger log4Jlogger = (Log4jLogger) LoggerFactory.getLogger(clazz);
 
@@ -124,26 +111,22 @@ public final class TestElf
 
          Logger logger = (Logger) field.get(log4Jlogger);
          logger.setLevel(logLevel);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   private static class StringAppender extends AbstractAppender
-   {
+   private static class StringAppender extends AbstractAppender {
       private static final long serialVersionUID = -1932433845656444920L;
       private PrintStream stream;
 
-      StringAppender(String name, PrintStream stream)
-      {
+      StringAppender(String name, PrintStream stream) {
          super(name, null, CsvLogEventLayout.createDefaultLayout());
          this.stream = stream;
       }
 
       @Override
-      public void append(LogEvent event)
-      {
+      public void append(LogEvent event) {
          stream.println(event.getMessage().getFormattedMessage());
       }
    }

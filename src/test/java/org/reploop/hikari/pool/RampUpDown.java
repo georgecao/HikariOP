@@ -1,51 +1,46 @@
 package org.reploop.hikari.pool;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 
-public class RampUpDown
-{
-    @Test
-    public void rampUpDownTest() throws SQLException, InterruptedException
-    {
-        HikariConfig config = new HikariConfig();
-        config.setMinimumIdle(5);
-        config.setMaximumPoolSize(60);
-        config.setInitializationFailFast(true);
-        config.setConnectionTestQuery("VALUES 1");
-        config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+import java.sql.Connection;
+import java.sql.SQLException;
 
-        System.setProperty("com.zaxxer.hikari.housekeeping.periodMs", "250");
+public class RampUpDown {
+   @Test
+   public void rampUpDownTest() throws SQLException, InterruptedException {
+      HikariConfig config = new HikariConfig();
+      config.setMinimumIdle(5);
+      config.setMaximumPoolSize(60);
+      config.setInitializationFailFast(true);
+      config.setConnectionTestQuery("VALUES 1");
+      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
 
-        try (HikariDataSource ds = new HikariDataSource(config)) {
+      System.setProperty("com.zaxxer.hikari.housekeeping.periodMs", "250");
 
-           ds.setIdleTimeout(1000);
-           HikariPool pool = TestElf.getPool(ds);
+      try (HikariDataSource ds = new HikariDataSource(config)) {
 
-           Assert.assertSame("Total connections not as expected", 5, pool.getTotalConnections());
+         ds.setIdleTimeout(1000);
+         HikariPool pool = TestElf.getPool(ds);
 
-           Connection[] connections = new Connection[ds.getMaximumPoolSize()];
-           for (int i = 0; i < connections.length; i++)
-           {
-               connections[i] = ds.getConnection();
-           }
+         Assert.assertSame("Total connections not as expected", 5, pool.getTotalConnections());
 
-           Assert.assertSame("Total connections not as expected", 60, pool.getTotalConnections());
+         Connection[] connections = new Connection[ds.getMaximumPoolSize()];
+         for (int i = 0; i < connections.length; i++) {
+            connections[i] = ds.getConnection();
+         }
 
-           for (Connection connection : connections)
-           {
-               connection.close();
-           }
+         Assert.assertSame("Total connections not as expected", 60, pool.getTotalConnections());
 
-           Thread.sleep(2500);
+         for (Connection connection : connections) {
+            connection.close();
+         }
 
-           Assert.assertSame("Total connections not as expected", 5, pool.getTotalConnections());
-        }
-    }
+         Thread.sleep(2500);
+
+         Assert.assertSame("Total connections not as expected", 5, pool.getTotalConnections());
+      }
+   }
 }

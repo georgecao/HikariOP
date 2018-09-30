@@ -16,12 +16,6 @@
 
 package org.reploop.hikari.metrics.dropwizard;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Properties;
-import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -31,11 +25,17 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.pool.HikariPool;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Provides Dropwizard HealthChecks.  Two health checks are provided:
  * <ul>
- *   <li>ConnectivityCheck</li>
- *   <li>Connection99Percent</li>
+ * <li>ConnectivityCheck</li>
+ * <li>Connection99Percent</li>
  * </ul>
  * The ConnectivityCheck will use the <code>connectionTimeout</code>, unless the health check property
  * <code>connectivityCheckTimeoutMs</code> is defined.  However, if either the <code>connectionTimeout</code>
@@ -46,17 +46,15 @@ import org.reploop.hikari.pool.HikariPool;
  *
  * @author Brett Wooldridge
  */
-public final class CodahaleHealthChecker
-{
+public final class CodahaleHealthChecker {
    /**
     * Register Dropwizard health checks.
     *
-    * @param pool the pool to register health checks for
+    * @param pool         the pool to register health checks for
     * @param hikariConfig the pool configuration
-    * @param registry the HealthCheckRegistry into which checks will be registered
+    * @param registry     the HealthCheckRegistry into which checks will be registered
     */
-   public static void registerHealthChecks(final HikariPool pool, final HikariConfig hikariConfig, final HealthCheckRegistry registry)
-   {
+   public static void registerHealthChecks(final HikariPool pool, final HikariConfig hikariConfig, final HealthCheckRegistry registry) {
       final Properties healthCheckProperties = hikariConfig.getHealthCheckProperties();
       final MetricRegistry metricRegistry = (MetricRegistry) hikariConfig.getMetricRegistry();
 
@@ -65,10 +63,9 @@ public final class CodahaleHealthChecker
 
       final long expected99thPercentile = Long.parseLong(healthCheckProperties.getProperty("expected99thPercentileMs", "0"));
       if (metricRegistry != null && expected99thPercentile > 0) {
-         SortedMap<String,Timer> timers = metricRegistry.getTimers(new MetricFilter() {
+         SortedMap<String, Timer> timers = metricRegistry.getTimers(new MetricFilter() {
             @Override
-            public boolean matches(String name, Metric metric)
-            {
+            public boolean matches(String name, Metric metric) {
                return name.equals(MetricRegistry.name(hikariConfig.getPoolName(), "pool", "Wait"));
             }
          });
@@ -80,35 +77,31 @@ public final class CodahaleHealthChecker
       }
    }
 
-   private CodahaleHealthChecker()
-   {
+   private CodahaleHealthChecker() {
       // private constructor
    }
 
-   private static class ConnectivityHealthCheck extends HealthCheck
-   {
+   private static class ConnectivityHealthCheck extends HealthCheck {
       private final HikariPool pool;
       private final long checkTimeoutMs;
 
-      ConnectivityHealthCheck(final HikariPool pool, final long checkTimeoutMs)
-      {
+      ConnectivityHealthCheck(final HikariPool pool, final long checkTimeoutMs) {
          this.pool = pool;
          this.checkTimeoutMs = (checkTimeoutMs > 0 && checkTimeoutMs != Integer.MAX_VALUE ? checkTimeoutMs : TimeUnit.SECONDS.toMillis(10));
       }
 
-      /** {@inheritDoc} */
+      /**
+       * {@inheritDoc}
+       */
       @Override
-      protected Result check() throws Exception
-      {
+      protected Result check() throws Exception {
          Connection connection = null;
          try {
             connection = pool.getConnection(checkTimeoutMs);
             return Result.healthy();
-         }
-         catch (SQLException e) {
+         } catch (SQLException e) {
             return Result.unhealthy(e);
-         }
-         finally {
+         } finally {
             if (connection != null) {
                connection.close();
             }
@@ -116,21 +109,20 @@ public final class CodahaleHealthChecker
       }
    }
 
-   private static class Connection99Percent extends HealthCheck
-   {
+   private static class Connection99Percent extends HealthCheck {
       private final Timer waitTimer;
       private final long expected99thPercentile;
 
-      Connection99Percent(final Timer waitTimer, final long expected99thPercentile)
-      {
+      Connection99Percent(final Timer waitTimer, final long expected99thPercentile) {
          this.waitTimer = waitTimer;
          this.expected99thPercentile = expected99thPercentile;
       }
 
-      /** {@inheritDoc} */
+      /**
+       * {@inheritDoc}
+       */
       @Override
-      protected Result check() throws Exception
-      {
+      protected Result check() throws Exception {
          final long the99thPercentile = TimeUnit.NANOSECONDS.toMillis(Math.round(waitTimer.getSnapshot().get99thPercentile()));
          return the99thPercentile <= expected99thPercentile ? Result.healthy() : Result.unhealthy("99th percentile connection wait time of %dms exceeds the threshold %dms", the99thPercentile, expected99thPercentile);
       }

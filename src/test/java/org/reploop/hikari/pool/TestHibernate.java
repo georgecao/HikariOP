@@ -1,19 +1,16 @@
 package org.reploop.hikari.pool;
 
-import java.sql.Connection;
-import java.util.Properties;
-
 import org.hibernate.service.UnknownUnwrapTypeException;
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.reploop.hikari.hibernate.HikariConnectionProvider;
 
-public class TestHibernate
-{
+import java.sql.Connection;
+import java.util.Properties;
+
+public class TestHibernate {
    @Test
-   public void testConnectionProvider() throws Exception
-   {
+   public void testConnectionProvider() throws Exception {
       HikariConnectionProvider provider = new HikariConnectionProvider();
 
       Properties props = new Properties();
@@ -29,8 +26,7 @@ public class TestHibernate
       try {
          provider.unwrap(TestHibernate.class);
          Assert.fail("Expected exception");
-      }
-      catch (UnknownUnwrapTypeException e) {
+      } catch (UnknownUnwrapTypeException e) {
       }
 
       provider.stop();

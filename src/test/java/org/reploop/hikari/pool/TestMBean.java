@@ -15,27 +15,24 @@
  */
 package org.reploop.hikari.pool;
 
-import java.sql.SQLException;
-
 import org.junit.Test;
-
 import org.reploop.hikari.HikariConfig;
 import org.reploop.hikari.HikariDataSource;
 
-public class TestMBean
-{
-    @Test
-    public void testMBeanRegistration() throws SQLException
-    {
-        HikariConfig config = new HikariConfig();
-        config.setMinimumIdle(0);
-        config.setMaximumPoolSize(1);
-        config.setRegisterMbeans(true);
-        config.setConnectionTimeout(2800);
-        config.setConnectionTestQuery("VALUES 1");
-        config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+import java.sql.SQLException;
 
-        HikariDataSource ds = new HikariDataSource(config);
-        ds.close();
-    }
+public class TestMBean {
+   @Test
+   public void testMBeanRegistration() throws SQLException {
+      HikariConfig config = new HikariConfig();
+      config.setMinimumIdle(0);
+      config.setMaximumPoolSize(1);
+      config.setRegisterMbeans(true);
+      config.setConnectionTimeout(2800);
+      config.setConnectionTestQuery("VALUES 1");
+      config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
+
+      HikariDataSource ds = new HikariDataSource(config);
+      ds.close();
+   }
 }

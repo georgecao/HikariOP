@@ -16,8 +16,6 @@
 
 package org.reploop.hikari.util;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -26,18 +24,16 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
- *
  * @author Brett Wooldridge
  */
-public final class UtilityElf
-{
+public final class UtilityElf {
    /**
-    *
     * @return null if string is null or empty
-   */
-   public static String getNullIfEmpty(final String text)
-   {
+    */
+   public static String getNullIfEmpty(final String text) {
       return text == null ? null : text.trim().isEmpty() ? null : text.trim();
    }
 
@@ -46,12 +42,10 @@ public final class UtilityElf
     *
     * @param millis the number of milliseconds to sleep
     */
-   public static void quietlySleep(final long millis)
-   {
+   public static void quietlySleep(final long millis) {
       try {
          Thread.sleep(millis);
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
          // I said be quiet!
       }
    }
@@ -60,14 +54,13 @@ public final class UtilityElf
     * Create and instance of the specified class using the constructor matching the specified
     * arguments.
     *
-    * @param <T> the class type
+    * @param <T>       the class type
     * @param className the name of the class to instantiate
-    * @param clazz a class to cast the result as
-    * @param args arguments to a constructor
+    * @param clazz     a class to cast the result as
+    * @param args      arguments to a constructor
     * @return an instance of the specified class
     */
-   public static <T> T createInstance(final String className, final Class<T> clazz, final Object... args)
-   {
+   public static <T> T createInstance(final String className, final Class<T> clazz, final Object... args) {
       if (className == null) {
          return null;
       }
@@ -84,8 +77,7 @@ public final class UtilityElf
          }
          Constructor<?> constructor = loaded.getConstructor(argClasses);
          return clazz.cast(constructor.newInstance(args));
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
@@ -93,14 +85,13 @@ public final class UtilityElf
    /**
     * Create a ThreadPoolExecutor.
     *
-    * @param queueSize the queue size
-    * @param threadName the thread name
+    * @param queueSize     the queue size
+    * @param threadName    the thread name
     * @param threadFactory an optional ThreadFactory
-    * @param policy the RejectedExecutionHandler policy
+    * @param policy        the RejectedExecutionHandler policy
     * @return a ThreadPoolExecutor
     */
-   public static ThreadPoolExecutor createThreadPoolExecutor(final int queueSize, final String threadName, ThreadFactory threadFactory, final RejectedExecutionHandler policy)
-   {
+   public static ThreadPoolExecutor createThreadPoolExecutor(final int queueSize, final String threadName, ThreadFactory threadFactory, final RejectedExecutionHandler policy) {
       if (threadFactory == null) {
          threadFactory = new DefaultThreadFactory(threadName, true);
       }
@@ -121,8 +112,7 @@ public final class UtilityElf
     * @param transactionIsolationName the name of the transaction isolation level
     * @return the int value of the isolation level or -1
     */
-   public static int getTransactionIsolation(final String transactionIsolationName)
-   {
+   public static int getTransactionIsolation(final String transactionIsolationName) {
       if (transactionIsolationName != null) {
          try {
             final String upperName = transactionIsolationName.toUpperCase();
@@ -140,9 +130,8 @@ public final class UtilityElf
                   return level;
                default:
                   throw new IllegalArgumentException();
-             }
-         }
-         catch (Exception e) {
+            }
+         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid transaction isolation value: " + transactionIsolationName);
          }
       }
